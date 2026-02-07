@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package ticker;
 
+// ADD THIS LINE:
+option go_package = "./pb";
+
 // The TickerUpdate message represents a single price movement
 message TickerUpdate {
   string symbol = 1;    // e.g., "BTC-USD"

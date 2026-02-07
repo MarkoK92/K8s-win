@@ -2,7 +2,10 @@ module k8s-ingester
 
 go 1.25.5
 
-require github.com/nats-io/nats.go v1.48.0
+require (
+	github.com/nats-io/nats.go v1.48.0
+	google.golang.org/protobuf v1.36.11
+)
 
 require (
 	github.com/klauspost/compress v1.18.0 // indirect

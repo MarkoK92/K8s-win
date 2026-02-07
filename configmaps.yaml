@@ -1,4 +1,4 @@
-# ConfigMaps for the Ticker Pipeline
+# ConfigMaps for the Ticker Pipeline - Protobuf Edition
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -8,29 +8,224 @@ data:
   index.html: |
     <!DOCTYPE html>
     <html>
-    <body style="background:#000; color:#0f0; font-family:monospace; text-align:center; padding-top:50px;">
-        <h1>🚀 LIVE K8S TICKER</h1>
-        <div id="price" style="font-size:7em;">0.00</div>
-        <div id="status" style="color:#444;">Connecting...</div>
-        <div id="debug" style="margin-top:50px; color:red; font-size:0.8em;"></div>
+    <head>
+        <title>K8s Live Charts</title>
+        <meta charset="utf-8">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+                background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+                color: #0f0; 
+                font-family: 'Courier New', monospace; 
+                min-height: 100vh;
+                padding: 20px;
+            }
+            h1 { 
+                text-align: center; 
+                margin-bottom: 20px;
+                font-size: 1.8em;
+                text-shadow: 0 0 20px rgba(0,255,0,0.5);
+            }
+            .ticker-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                gap: 20px;
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+            .ticker-card {
+                background: rgba(0,20,0,0.7);
+                border: 1px solid #0f0;
+                border-radius: 12px;
+                padding: 20px;
+                box-shadow: 0 0 25px rgba(0,255,0,0.15);
+            }
+            .card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+            }
+            .symbol { font-size: 1.3em; font-weight: bold; }
+            .price { font-size: 1.8em; font-weight: bold; }
+            .price.flash { color: #fff; }
+            .change { font-size: 0.9em; }
+            .change.up { color: #00ff88; }
+            .change.down { color: #ff4444; }
+            .chart-container { height: 120px; }
+            #status { text-align: center; margin: 15px 0; color: #444; }
+            #status.connected { color: #0f0; }
+            #debug { 
+                margin-top: 20px; color: #555; font-size: 0.65em; 
+                border-top: 1px solid #222; padding: 10px;
+                max-height: 100px; overflow-y: auto;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>🚀 LIVE K8S TICKER + CHARTS</h1>
+        <div id="status">Connecting...</div>
+        <div class="ticker-grid" id="grid"></div>
+        <div id="debug"></div>
+        
         <script type="module">
-            import { connect, StringCodec } from "https://cdn.jsdelivr.net/npm/nats.ws@latest/esm/nats.js";
-            const log = (m) => { document.getElementById('debug').innerText += m + '\n'; };
+            const charts = {};
+            const chartData = {};
+            const prices = {};
+            const prevPrices = {};
+            const MAX_POINTS = 50;
+            const SYMBOLS = ['BTC-USD', 'ETH-USD', 'SOL-USD'];
+            
+            const log = (m) => { 
+                const d = document.getElementById('debug');
+                d.innerHTML = `[${new Date().toLocaleTimeString()}] ${m}<br>` + d.innerHTML;
+            };
+
+            function createCard(symbol) {
+                const grid = document.getElementById('grid');
+                const card = document.createElement('div');
+                card.id = `card-${symbol}`;
+                card.className = 'ticker-card';
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="symbol">${symbol}</span>
+                        <span class="change" id="change-${symbol}">--</span>
+                    </div>
+                    <div class="price" id="price-${symbol}">Loading...</div>
+                    <div class="chart-container">
+                        <canvas id="chart-${symbol}"></canvas>
+                    </div>
+                `;
+                grid.appendChild(card);
+                
+                const ctx = document.getElementById(`chart-${symbol}`).getContext('2d');
+                charts[symbol] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            data: [],
+                            borderColor: '#0f0',
+                            borderWidth: 2,
+                            fill: true,
+                            backgroundColor: 'rgba(0,255,0,0.1)',
+                            tension: 0.3,
+                            pointRadius: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { display: false },
+                            y: { display: false }
+                        },
+                        animation: { duration: 0 }
+                    }
+                });
+                chartData[symbol] = { labels: [], data: [] };
+            }
+
+            function updateChart(symbol, price, timestamp) {
+                if (!charts[symbol]) createCard(symbol);
+                
+                const cd = chartData[symbol];
+                cd.labels.push(new Date(timestamp).toLocaleTimeString());
+                cd.data.push(price);
+                
+                if (cd.data.length > MAX_POINTS) {
+                    cd.labels.shift();
+                    cd.data.shift();
+                }
+                
+                charts[symbol].data.labels = cd.labels;
+                charts[symbol].data.datasets[0].data = cd.data;
+                charts[symbol].update('none');
+                
+                // Update price display
+                const priceEl = document.getElementById(`price-${symbol}`);
+                const changeEl = document.getElementById(`change-${symbol}`);
+                const prev = prevPrices[symbol] || price;
+                
+                priceEl.innerText = '$' + price.toLocaleString(undefined, {
+                    minimumFractionDigits: 2, maximumFractionDigits: 2
+                });
+                priceEl.classList.add('flash');
+                setTimeout(() => priceEl.classList.remove('flash'), 100);
+                
+                const diff = price - prev;
+                if (diff !== 0) {
+                    const pct = ((diff / prev) * 100).toFixed(2);
+                    changeEl.innerText = diff > 0 ? `▲ +${pct}%` : `▼ ${pct}%`;
+                    changeEl.className = 'change ' + (diff > 0 ? 'up' : 'down');
+                }
+                prevPrices[symbol] = price;
+            }
+
+            async function loadHistory() {
+                log("Loading historical data...");
+                for (const symbol of SYMBOLS) {
+                    try {
+                        const res = await fetch(`/data/${symbol}.json`);
+                        if (res.ok) {
+                            const history = await res.json();
+                            log(`Loaded ${history.length} points for ${symbol}`);
+                            createCard(symbol);
+                            for (const pt of history.slice(-MAX_POINTS)) {
+                                updateChart(symbol, pt.p, pt.t);
+                            }
+                        }
+                    } catch (e) {
+                        log(`No history for ${symbol}`);
+                        createCard(symbol);
+                    }
+                }
+            }
+
             async function start() {
+                await loadHistory();
+                
                 try {
-                    log("Attempting connection to ws://127.0.0.1:30080...");
-                    const nc = await connect({ servers: "ws://127.0.0.1:30080" });
+                    log("Connecting to NATS...");
+                    const natsModule = await import("https://cdn.jsdelivr.net/npm/nats.ws@1.19.1/+esm");
+                    const nc = await natsModule.connect({ servers: "ws://127.0.0.1:30080" });
+                    
                     document.getElementById('status').innerText = 'CONNECTED';
-                    document.getElementById('status').style.color = '#0f0';
-                    log("SUCCESS: Linked to NATS!");
+                    document.getElementById('status').className = 'connected';
+                    log("SUCCESS: Connected to NATS!");
+
+                    function decode(bytes) {
+                        const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+                        let pos = 0;
+                        const r = { symbol: '', price: 0, timestamp: Date.now() };
+                        while (pos < bytes.length) {
+                            const tag = bytes[pos++];
+                            const fn = tag >> 3, wt = tag & 7;
+                            if (fn === 1 && wt === 2) {
+                                const len = bytes[pos++];
+                                r.symbol = new TextDecoder().decode(bytes.slice(pos, pos + len));
+                                pos += len;
+                            } else if (fn === 2 && wt === 1) {
+                                r.price = view.getFloat64(pos, true); pos += 8;
+                            } else if (fn === 4 && wt === 0) {
+                                let val = 0n, sh = 0n;
+                                while (bytes[pos] & 0x80) { val |= BigInt(bytes[pos++] & 0x7f) << sh; sh += 7n; }
+                                val |= BigInt(bytes[pos++]) << sh;
+                                r.timestamp = Number(val);
+                            } else break;
+                        }
+                        return r;
+                    }
 
                     const sub = nc.subscribe("market.ticks");
-                    const sc = StringCodec();
                     for await (const m of sub) {
-                        document.getElementById('price').innerText = sc.decode(m.data);
+                        const tick = decode(new Uint8Array(m.data));
+                        updateChart(tick.symbol, tick.price, tick.timestamp);
                     }
                 } catch (err) {
-                    log("NATS ERROR: " + (err.message || err.code || JSON.stringify(err)));
+                    log("ERROR: " + err.message);
                     document.getElementById('status').innerText = 'RECONNECTING...';
                     setTimeout(start, 3000);
                 }

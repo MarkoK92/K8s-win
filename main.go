@@ -1,50 +1,117 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
+	"sync"
+	"time"
+
+	"k8s-ingester/pb"
 
 	"github.com/nats-io/nats.go"
-	// In a real project, you'd import your generated 'ticker' package here
+	"google.golang.org/protobuf/proto"
 )
 
+// HistoryEntry represents a single price point
+type HistoryEntry struct {
+	Time  int64   `json:"t"`
+	Price float64 `json:"p"`
+}
+
+var (
+	historyDir  = "data"
+	historyLock sync.Mutex
+	maxHistory  = 200 // Keep last 200 ticks per symbol
+)
+
+func appendToHistory(symbol string, price float64, timestamp int64) {
+	historyLock.Lock()
+	defer historyLock.Unlock()
+
+	// Ensure data directory exists
+	os.MkdirAll(historyDir, 0755)
+
+	filePath := filepath.Join(historyDir, symbol+".json")
+
+	// Read existing history
+	var history []HistoryEntry
+	if data, err := os.ReadFile(filePath); err == nil {
+		json.Unmarshal(data, &history)
+	}
+
+	// Append new entry
+	history = append(history, HistoryEntry{Time: timestamp, Price: price})
+
+	// Trim to max size
+	if len(history) > maxHistory {
+		history = history[len(history)-maxHistory:]
+	}
+
+	// Write back
+	data, _ := json.Marshal(history)
+	os.WriteFile(filePath, data, 0644)
+}
+
 func main() {
-	// 1. Connect to NATS (Use the K8s service name)
-	nc, err := nats.Connect("nats://nats-service:4222")
+	// 1. Connect to NATS
+	nc, err := nats.Connect("nats://localhost:4222")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("NATS Error: ", err)
 	}
 	defer nc.Close()
 
-	// 2. Setup UDP Listener
+	// 2. Listen for UDP on 5005
 	addr := net.UDPAddr{Port: 5005, IP: net.ParseIP("0.0.0.0")}
 	conn, err := net.ListenUDP("udp", &addr)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("UDP Error: ", err)
 	}
 	defer conn.Close()
 
-	fmt.Println("🚀 Go Ingester: Listening for UDP and Publishing to NATS...")
+	fmt.Println("🚀 High-Speed Ingester: BINARY MODE + HISTORY ACTIVE")
+	fmt.Println("📁 Writing history to ./data/*.json")
 
 	buf := make([]byte, 1024)
 	for {
 		n, _, _ := conn.ReadFromUDP(buf)
-		rawData := string(buf[:n])
+		rawData := strings.TrimSpace(string(buf[:n]))
 
-		// 3. Parse and Encode to Protobuf
-		// Simulation: BTC-USD,64500.25
+		// Split input like "BTC-USD,74250.65"
 		parts := strings.Split(rawData, ",")
 		if len(parts) < 2 {
 			continue
 		}
 
-		// This is where you'd use the ticker.TickerUpdate struct
-		fmt.Printf("Encoding %s: %s\n", parts[0], parts[1])
+		price, _ := strconv.ParseFloat(parts[1], 64)
+		timestamp := time.Now().UnixMilli()
 
-		// 4. Publish to NATS
-		// In Phase 2, we send the raw data; in Phase 3, we send 'protoData'
-		nc.Publish("market.ticks", []byte(rawData))
+		// 3. Create the Protobuf Object
+		update := &pb.TickerUpdate{
+			Symbol:    parts[0],
+			Price:     price,
+			Volume:    500,
+			Timestamp: timestamp,
+		}
+
+		// 4. MARSHAL: Convert the object to binary bytes
+		binaryData, err := proto.Marshal(update)
+		if err != nil {
+			log.Println("Encoding error:", err)
+			continue
+		}
+
+		// 5. Publish binary bytes to NATS
+		nc.Publish("market.ticks", binaryData)
+
+		// 6. Write to history file
+		go appendToHistory(parts[0], price, timestamp)
+
+		fmt.Printf("Sent: %s -> $%.2f\n", update.Symbol, update.Price)
 	}
 }
