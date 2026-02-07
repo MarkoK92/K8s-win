@@ -1,0 +1,75 @@
+# Deployments for the Ticker Pipeline
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nats-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nats
+  template:
+    metadata:
+      labels:
+        app: nats
+    spec:
+      containers:
+      - name: nats
+        image: nats:latest
+        args: ["-c", "/etc/nats/nats.conf"]
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nats
+      volumes:
+      - name: config
+        configMap:
+          name: nats-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ticker-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ticker
+  template:
+    metadata:
+      labels:
+        app: ticker
+    spec:
+      containers:
+      # UI - serves the web page
+      - name: ui
+        image: nginx:alpine
+        volumeMounts:
+        - name: code
+          mountPath: /usr/share/nginx/html
+      # Ingester - receives UDP and publishes to NATS
+      - name: ingester
+        image: node:alpine
+        workingDir: /app
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            mkdir -p /app && cd /app && rm -rf node_modules package-lock.json && npm cache clean --force && npm init -y && npm install nats && node -e "
+            const NATS = require('nats');
+            const dgram = require('dgram');
+            (async () => {
+              console.log('Ingester starting...');
+              const nc = await NATS.connect({ servers: 'nats-service:4222' });
+              console.log('Connected to NATS');
+              const server = dgram.createSocket('udp4');
+              server.on('message', (msg) => {
+                console.log('Received:', msg.toString());
+                nc.publish('market.ticks', msg);
+              });
+              server.bind(5005, () => console.log('Listening on UDP 5005'));
+            })();
+            "
+      volumes:
+      - name: code
+        configMap:
+          name: ticker-ui-code

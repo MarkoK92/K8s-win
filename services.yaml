@@ -1,0 +1,52 @@
+# Services for the Ticker Pipeline
+---
+# Internal NATS service (for ingester -> NATS communication)
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats-service
+spec:
+  selector:
+    app: nats
+  ports:
+  - port: 4222
+---
+# NATS WebSocket gateway (for browser -> NATS communication)
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats-gateway-service
+spec:
+  type: NodePort
+  selector:
+    app: nats
+  ports:
+  - port: 8080
+    nodePort: 30080
+---
+# Ticker UI service (for browser -> nginx)
+apiVersion: v1
+kind: Service
+metadata:
+  name: ticker-ui-service
+spec:
+  type: NodePort
+  selector:
+    app: ticker
+  ports:
+  - port: 80
+    nodePort: 30007
+---
+# Ingester UDP service (for external UDP -> ingester)
+apiVersion: v1
+kind: Service
+metadata:
+  name: ticker-ingester-service
+spec:
+  type: NodePort
+  selector:
+    app: ticker
+  ports:
+  - protocol: UDP
+    port: 5005
+    nodePort: 30005

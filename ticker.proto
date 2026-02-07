@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package ticker;
+
+// The TickerUpdate message represents a single price movement
+message TickerUpdate {
+  string symbol = 1;    // e.g., "BTC-USD"
+  double price = 2;     // e.g., 65000.50
+  uint64 volume = 3;    // Number of shares/coins traded
+  int64 timestamp = 4;  // Unix timestamp in milliseconds
+}
