@@ -1,4 +1,4 @@
-# Deployments for the Ticker Pipeline
+# Deployments for the Ticker Pipeline - Production Ready
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -15,16 +15,40 @@ spec:
         app: nats
     spec:
       containers:
-      - name: nats
-        image: nats:latest
-        args: ["-c", "/etc/nats/nats.conf"]
-        volumeMounts:
-        - name: config
-          mountPath: /etc/nats
+        - name: nats
+          image: nats:latest
+          args: ["-c", "/etc/nats/nats.conf", "-js"] # Enable JetStream
+          ports:
+            - containerPort: 4222
+              name: client
+            - containerPort: 8080
+              name: websocket
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8222
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8222
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nats
       volumes:
-      - name: config
-        configMap:
-          name: nats-config
+        - name: config
+          configMap:
+            name: nats-config
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -41,35 +65,64 @@ spec:
         app: ticker
     spec:
       containers:
-      # UI - serves the web page
-      - name: ui
-        image: nginx:alpine
-        volumeMounts:
-        - name: code
-          mountPath: /usr/share/nginx/html
-      # Ingester - receives UDP and publishes to NATS
-      - name: ingester
-        image: node:alpine
-        workingDir: /app
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            mkdir -p /app && cd /app && rm -rf node_modules package-lock.json && npm cache clean --force && npm init -y && npm install nats && node -e "
-            const NATS = require('nats');
-            const dgram = require('dgram');
-            (async () => {
-              console.log('Ingester starting...');
-              const nc = await NATS.connect({ servers: 'nats-service:4222' });
-              console.log('Connected to NATS');
-              const server = dgram.createSocket('udp4');
-              server.on('message', (msg) => {
-                console.log('Received:', msg.toString());
-                nc.publish('market.ticks', msg);
-              });
-              server.bind(5005, () => console.log('Listening on UDP 5005'));
-            })();
-            "
+        # UI - serves the web page
+        - name: ui
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          volumeMounts:
+            - name: code
+              mountPath: /usr/share/nginx/html
+        # Ingester - receives UDP and publishes to NATS (placeholder for K8s)
+        - name: ingester
+          image: node:alpine
+          workingDir: /app
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              mkdir -p /app && cd /app && rm -rf node_modules package-lock.json && npm cache clean --force && npm init -y && npm install nats && node -e "
+              const NATS = require('nats');
+              const dgram = require('dgram');
+              (async () => {
+                console.log('Ingester starting...');
+                const nc = await NATS.connect({ servers: 'nats-service:4222' });
+                console.log('Connected to NATS');
+                const server = dgram.createSocket('udp4');
+                server.on('message', (msg) => {
+                  console.log('Received:', msg.toString());
+                  nc.publish('market.ticks', msg);
+                });
+                server.bind(5005, () => console.log('Listening on UDP 5005'));
+              })();
+              "
       volumes:
-      - name: code
-        configMap:
-          name: ticker-ui-code
+        - name: code
+          configMap:
+            name: ticker-ui-code
