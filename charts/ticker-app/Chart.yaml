@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ticker-app
+description: Real-time ticker UI and ingester for the K8S pipeline
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

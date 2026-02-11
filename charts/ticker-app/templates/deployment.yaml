@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ticker-app
+  labels:
+    {{- include "ticker-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      {{- include "ticker-app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ticker-app.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        # UI - serves the web page
+        - name: ui
+          image: {{ .Values.ui.image }}
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              cpu: {{ .Values.ui.resources.requests.cpu | quote }}
+              memory: {{ .Values.ui.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.ui.resources.limits.cpu | quote }}
+              memory: {{ .Values.ui.resources.limits.memory | quote }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          volumeMounts:
+            - name: code
+              mountPath: /usr/share/nginx/html
+        # Ingester - receives UDP and publishes to NATS
+        - name: ingester
+          image: {{ .Values.ingester.image }}
+          workingDir: /app
+          resources:
+            requests:
+              cpu: {{ .Values.ingester.resources.requests.cpu | quote }}
+              memory: {{ .Values.ingester.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.ingester.resources.limits.cpu | quote }}
+              memory: {{ .Values.ingester.resources.limits.memory | quote }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              mkdir -p /app && cd /app && rm -rf node_modules package-lock.json && npm cache clean --force && npm init -y && npm install nats && node -e "
+              const NATS = require('nats');
+              const dgram = require('dgram');
+              (async () => {
+                console.log('Ingester starting...');
+                const nc = await NATS.connect({ servers: '{{ .Values.natsHost }}:4222' });
+                console.log('Connected to NATS');
+                const server = dgram.createSocket('udp4');
+                server.on('message', (msg) => {
+                  console.log('Received:', msg.toString());
+                  nc.publish('market.ticks', msg);
+                });
+                server.bind(5005, () => console.log('Listening on UDP 5005'));
+              })();
+              "
+      volumes:
+        - name: code
+          configMap:
+            name: ticker-ui-code

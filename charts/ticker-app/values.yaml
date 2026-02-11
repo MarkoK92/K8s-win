@@ -1,0 +1,29 @@
+# Ticker Application Configuration
+replicas: 1
+
+# NATS host (must match the service name from the nats chart)
+natsHost: nats-service
+
+# UI container (nginx serving the web page)
+ui:
+  image: nginx:alpine
+  nodePort: 30007
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "128Mi"
+
+# Ingester sidecar (receives UDP, publishes to NATS)
+ingester:
+  image: node:alpine
+  udpNodePort: 30005
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "300m"
+      memory: "256Mi"

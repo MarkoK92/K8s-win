@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nats-config
+  labels:
+    {{- include "nats.labels" . | nindent 4 }}
+data:
+  nats.conf: |
+    # Core NATS
+    port: 4222
+    max_payload: 1MB
+
+    # Health monitoring (for K8s probes)
+    http_port: 8222
+
+    # WebSocket support
+    websocket {
+      port: {{ .Values.websocket.port }}
+      no_tls: {{ .Values.websocket.noTls }}
+      same_origin: {{ .Values.websocket.sameOrigin }}
+    }
+
+    # JetStream (message persistence)
+    jetstream {
+      store_dir: /data/jetstream
+      max_mem: {{ .Values.jetstream.maxMem }}
+      max_file: {{ .Values.jetstream.maxFile }}
+    }

@@ -1,0 +1,25 @@
+# Argo CD Application for Ticker App chart
+# Apply after Argo CD is installed: kubectl apply -f argocd/ticker-app.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ticker-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/MarkoK92/K8s-win.git
+    targetRevision: main
+    path: charts/ticker-app
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true       # Remove resources deleted from Git
+      selfHeal: true    # Re-sync if someone changes resources manually
+    syncOptions:
+      - CreateNamespace=true

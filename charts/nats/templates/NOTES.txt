@@ -1,0 +1,16 @@
+🚀 NATS has been deployed!
+
+Internal access:
+  nats-service:4222 (from within the cluster)
+
+WebSocket access (for browsers):
+  NodePort {{ .Values.gatewayNodePort }} → port {{ .Values.websocket.port }}
+
+  Local dev:
+    kubectl port-forward svc/nats-gateway-service {{ .Values.gatewayNodePort }}:{{ .Values.websocket.port }}
+
+  Then connect via: ws://127.0.0.1:{{ .Values.gatewayNodePort }}
+
+Verify:
+  kubectl get pods -l app=nats
+  kubectl logs -l app=nats

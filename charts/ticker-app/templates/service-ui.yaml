@@ -1,0 +1,14 @@
+# Ticker UI service (for browser -> nginx)
+apiVersion: v1
+kind: Service
+metadata:
+  name: ticker-ui-service
+  labels:
+    {{- include "ticker-app.labels" . | nindent 4 }}
+spec:
+  type: NodePort
+  selector:
+    {{- include "ticker-app.selectorLabels" . | nindent 4 }}
+  ports:
+  - port: 80
+    nodePort: {{ .Values.ui.nodePort }}

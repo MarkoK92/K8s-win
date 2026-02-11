@@ -328,6 +328,365 @@ This matters when sending millions of price updates per second!
 
 ---
 
+## Helm Charts
+
+The project includes **two independent Helm charts** under `charts/`, allowing you to deploy NATS and the ticker app separately.
+
+### Install NATS (infrastructure)
+```bash
+helm install nats charts/nats/
+```
+
+### Install Ticker App (application)
+```bash
+helm install ticker charts/ticker-app/
+```
+
+### Uninstall independently
+```bash
+helm uninstall ticker    # removes ticker, keeps NATS running
+helm uninstall nats      # removes NATS
+```
+
+### Override values
+```bash
+# Scale NATS
+helm install nats charts/nats/ --set replicas=3
+
+# Change NodePorts
+helm install ticker charts/ticker-app/ --set ui.nodePort=31000 --set ingester.udpNodePort=31005
+
+# Point ticker at a different NATS host
+helm install ticker charts/ticker-app/ --set natsHost=my-custom-nats
+```
+
+### Chart structure
+```
+charts/
+├── nats/            # NATS messaging server (config, deployment, services)
+│   ├── Chart.yaml
+│   ├── values.yaml
+│   └── templates/
+└── ticker-app/      # Ticker UI + ingester (config, deployment, services)
+    ├── Chart.yaml
+    ├── values.yaml
+    └── templates/
+```
+
+> **Note:** The ticker-app chart's `natsHost` value defaults to `nats-service` (the ClusterIP created by the nats chart). If you change the NATS release name, override this value.
+
+### Migrating from raw manifests to Helm
+
+Helm creates its **own tracked resources**. It will **not** auto-replace existing `kubectl apply` resources. Remove them first:
+```bash
+# Remove old resources
+kubectl delete -f configmaps.yaml -f deployments.yaml -f services.yaml
+
+# Then install via Helm
+helm install nats charts/nats/
+helm install ticker charts/ticker-app/
+```
+
+### Post-Install Output
+
+After `helm install`, Helm shows the NOTES.txt with access instructions:
+
+**NATS chart:**
+```
+🚀 NATS has been deployed!
+
+Internal access:
+  nats-service:4222 (from within the cluster)
+
+WebSocket access (for browsers):
+  NodePort 30080 → port 8080
+
+Verify:
+  kubectl get pods -l app=nats
+  kubectl logs -l app=nats
+```
+
+**Ticker-app chart:**
+```
+🚀 Ticker App has been deployed!
+
+UI access:
+  NodePort 30007 → port 80
+
+UDP ingestion:
+  NodePort 30005 → port 5005
+
+NATS host: nats-service
+
+Verify:
+  kubectl get pods -l app=ticker
+  kubectl logs -l app=ticker -c ingester
+```
+
+> **Note:** Port-forwarding is still required for local development — see [Running (Local Development Mode)](#running-local-development-mode) above.
+
+---
+
+## Understanding Helm
+
+### Installing Helm
+
+Helm is a one-time install — no server component needed:
+
+| Platform | Command |
+|----------|---------|
+| **Windows** | `winget install Helm.Helm` or `choco install kubernetes-helm` |
+| **Linux** | `curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 \| bash` |
+| **macOS** | `brew install helm` |
+
+To scaffold a new chart from scratch: `helm create my-chart` (creates a default template structure).
+
+### File Roles
+
+| File | Purpose | Analogy |
+|------|---------|---------|
+| `Chart.yaml` | Chart metadata (name, version) | `package.json` |
+| `values.yaml` | All configurable parameters | Config file — the **only file you edit** for changes |
+| `templates/*.yaml` | K8s manifests with `{{ }}` placeholders | Code templates |
+| `_helpers.tpl` | Reusable label/name snippets | Shared utility functions |
+
+### `apiVersion: v2` vs `apps/v1` — Not the Same Thing
+
+| File | `apiVersion` refers to | Meaning |
+|------|------------------------|---------|
+| `Chart.yaml` | **Helm** chart API | `v2` = Helm 3 format (current) |
+| `deployment.yaml` | **Kubernetes** resource API | `apps/v1` = stable K8s Deployment |
+
+These are completely unrelated version numbers from different systems.
+
+### How `values.yaml` Links to Templates
+
+Every `{{ .Values.xxx }}` in a template is replaced with the matching value from `values.yaml`. The dot notation follows the YAML hierarchy:
+
+```yaml
+# values.yaml
+ingester:
+  udpNodePort: 30005    # ← This value...
+```
+
+```yaml
+# templates/service-ingester.yaml
+nodePort: {{ .Values.ingester.udpNodePort }}    # ← ...goes here
+#          └── .Values ─► ingester ─► udpNodePort = 30005
+```
+
+You can also override values at install time without editing the file:
+```bash
+helm install ticker charts/ticker-app/ --set ingester.udpNodePort=31005
+```
+
+### What `_helpers.tpl` Does
+
+It defines **reusable snippets** so labels stay consistent across all templates. Instead of copy-pasting the same labels into every file:
+
+```yaml
+# _helpers.tpl — DEFINE once
+{{- define "ticker-app.selectorLabels" -}}
+app: ticker
+app.kubernetes.io/name: {{ include "ticker-app.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+```
+
+```yaml
+# deployment.yaml — USE it
+matchLabels:
+  {{- include "ticker-app.selectorLabels" . | nindent 6 }}
+
+# service-ui.yaml — REUSE the same labels
+selector:
+  {{- include "ticker-app.selectorLabels" . | nindent 4 }}
+```
+
+This guarantees the Deployment and Service selectors always match (if they don't match, the Service can't find the pods). The `| nindent 6` just adds 6 spaces of indentation.
+
+---
+
+## Argo CD (GitOps)
+
+### Why Helm + Argo CD?
+
+**Helm** handles **packaging** — charts, templates, values. But you still run `helm install` manually.
+
+**Argo CD** handles **delivery** — it watches your Git repo and auto-deploys whenever you push. Together they form a full GitOps pipeline:
+
+```
+Developer pushes code
+         │
+         ▼
+   GitHub repo (K8s-win)
+         │
+         ▼
+   Argo CD (watches repo)
+         │ detects change in charts/
+         ▼
+   helm template → kubectl apply
+         │
+         ▼
+   Kubernetes cluster updated automatically
+```
+
+You never run `helm install` or `kubectl apply` manually again — just `git push`.
+
+### What is Argo CD?
+
+Argo CD is a **Kubernetes controller** that runs inside your cluster. It:
+- Continuously polls your Git repo (every ~3 minutes by default)
+- Compares what's **in Git** vs what's **running in the cluster**
+- If they differ, it syncs the cluster to match Git (auto-sync)
+- Provides a **web UI** and a **CLI tool** to manage everything
+
+Argo CD is **not UI-only** — you can use it three ways:
+
+| Access Method | When to Use |
+|---------------|-----------|
+| **Web UI** (https://localhost:8443) | Visual dashboard — see app status, sync history, resource tree |
+| **CLI** (`argocd` command) | Scripting, CI/CD pipelines, terminal power users |
+| **kubectl** | Apply Application manifests directly (what we do in Step 3) |
+
+### Step 1: Install Argo CD into Your Cluster
+
+```bash
+kubectl create namespace argocd
+```
+> **Why:** Argo CD needs its own namespace to keep its controller, server, and repo-server pods separate from your application pods.
+
+```bash
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+> **Why:** This downloads and deploys the official Argo CD manifests directly from GitHub. It installs ~7 components (API server, repo server, controller, Redis, etc.) into the `argocd` namespace. The `-n argocd` flag ensures everything goes into that namespace.
+
+```bash
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=argocd-server -n argocd --timeout=120s
+```
+> **Why:** The Argo CD server pod takes a few seconds to start. This command blocks until the API server pod is ready, so you don't try to log in before it's available. The `--timeout=120s` gives it up to 2 minutes.
+
+Verify all pods are running:
+```bash
+kubectl get pods -n argocd
+# You should see ~7 pods, all Running
+```
+
+### Step 2: Access Argo CD
+
+#### Option A: Web UI (recommended for beginners)
+
+```bash
+kubectl port-forward svc/argocd-server -n argocd 8443:443
+```
+> **Why:** The Argo CD server runs on HTTPS (port 443) inside the cluster. Port-forwarding maps your local port 8443 to it. We use 8443 to avoid conflicts with other services.
+
+Open **https://localhost:8443** in your browser (accept the self-signed certificate warning).
+
+**Login credentials:**
+- **Username:** `admin`
+- **Password:** Auto-generated during install. Retrieve it:
+
+Linux/macOS/WSL:
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+```
+> **Why:** Argo CD stores the initial admin password as a base64-encoded Kubernetes Secret. This command reads the secret and decodes it.
+
+Windows (PowerShell):
+```powershell
+[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String((kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}")))
+```
+
+#### Option B: CLI (`argocd` command)
+
+Install the CLI:
+
+| Platform | Command |
+|----------|---------|
+| **Windows** | `winget install Argo.ArgoCD.CLI` or `choco install argocd-cli` |
+| **Linux** | `curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64 && chmod +x argocd && sudo mv argocd /usr/local/bin/` |
+| **macOS** | `brew install argocd` |
+
+Login (while port-forward is running):
+```bash
+argocd login localhost:8443 --username admin --password <YOUR_PASSWORD> --insecure
+```
+> **Why:** `--insecure` skips TLS certificate verification (since we're using a self-signed cert). In production you'd use a real certificate.
+
+Useful CLI commands:
+```bash
+argocd app list                        # List all applications
+argocd app get nats                    # Show NATS app status
+argocd app sync nats                   # Force sync right now (don't wait for poll)
+argocd app history ticker-app          # Show deployment history
+argocd app rollback ticker-app 1       # Rollback to revision 1
+```
+
+### Step 3: Register Your Applications
+
+The `argocd/` folder contains Application manifests that tell Argo CD **what to watch and deploy**:
+
+```bash
+kubectl apply -f argocd/nats-app.yaml
+kubectl apply -f argocd/ticker-app.yaml
+```
+> **Why:** An Argo CD `Application` is a custom Kubernetes resource (CRD). When you `kubectl apply` it, Argo CD's controller picks it up and starts watching the specified Git repo path. We use `kubectl apply` (not the `argocd` CLI) because the manifests are already in our repo — this is the GitOps way.
+
+Each Application manifest tells Argo CD:
+- **Where to look**: `https://github.com/MarkoK92/K8s-win.git` → `charts/nats/` or `charts/ticker-app/`
+- **What to do**: Render the Helm chart using `values.yaml`
+- **When to deploy**: Automatically on every `git push` (auto-sync enabled)
+- **Self-heal**: If someone manually changes a resource in the cluster, Argo CD reverts it to match Git
+
+### Understanding the Application Manifest
+
+Here's what each field in `argocd/nats-app.yaml` does:
+
+```yaml
+apiVersion: argoproj.io/v1alpha1        # Argo CD custom resource API
+kind: Application                        # Type of resource
+metadata:
+  name: nats                            # Name shown in Argo CD UI
+  namespace: argocd                     # Must be in the argocd namespace
+spec:
+  project: default                      # Argo CD project (default = unrestricted)
+  source:
+    repoURL: https://github.com/MarkoK92/K8s-win.git   # Git repo to watch
+    targetRevision: main                # Branch to track
+    path: charts/nats                   # Folder containing the Helm chart
+    helm:
+      valueFiles:
+        - values.yaml                   # Which values file to use
+  destination:
+    server: https://kubernetes.default.svc   # Deploy to THIS cluster
+    namespace: default                       # Into this namespace
+  syncPolicy:
+    automated:
+      prune: true                       # Delete resources that were removed from Git
+      selfHeal: true                    # If someone runs kubectl edit, revert it
+    syncOptions:
+      - CreateNamespace=true            # Create the namespace if it doesn't exist
+```
+
+### Step 4: The GitOps Workflow
+
+Once set up, your workflow becomes:
+
+1. Edit `charts/ticker-app/values.yaml` (e.g., change `replicas: 2`)
+2. `git add . && git commit -m "scale ticker" && git push`
+3. Argo CD detects the change within ~3 minutes (or click **Sync** in the UI / run `argocd app sync ticker-app`)
+4. Kubernetes cluster is updated automatically
+
+### Argo CD Files
+
+| File | Purpose |
+|------|---------|
+| `argocd/nats-app.yaml` | Argo CD Application — watches `charts/nats/` in Git |
+| `argocd/ticker-app.yaml` | Argo CD Application — watches `charts/ticker-app/` in Git |
+
+---
+
 ## Troubleshooting
 
 ### Browser stuck on "Connecting..."

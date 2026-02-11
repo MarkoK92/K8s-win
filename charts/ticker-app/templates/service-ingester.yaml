@@ -1,0 +1,15 @@
+# Ingester UDP service (for external UDP -> ingester)
+apiVersion: v1
+kind: Service
+metadata:
+  name: ticker-ingester-service
+  labels:
+    {{- include "ticker-app.labels" . | nindent 4 }}
+spec:
+  type: NodePort
+  selector:
+    {{- include "ticker-app.selectorLabels" . | nindent 4 }}
+  ports:
+  - protocol: UDP
+    port: 5005
+    nodePort: {{ .Values.ingester.udpNodePort }}

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: nats
+description: NATS messaging server with WebSocket and JetStream support
+type: application
+version: 0.1.0
+appVersion: "latest"

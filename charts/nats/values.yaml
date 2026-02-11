@@ -1,0 +1,25 @@
+# NATS Server Configuration
+image: nats:latest
+replicas: 1
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+# WebSocket gateway
+websocket:
+  port: 8080
+  noTls: true
+  sameOrigin: false
+
+# NodePort for browser WebSocket access
+gatewayNodePort: 30080
+
+# JetStream persistence
+jetstream:
+  maxMem: "256MB"
+  maxFile: "1GB"
