@@ -27,3 +27,23 @@ ingester:
     limits:
       cpu: "300m"
       memory: "256Mi"
+
+# API service (queries InfluxDB for price history)
+api:
+  image: golang:1.21-alpine
+  nodePort: 30090
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "300m"
+      memory: "256Mi"
+
+# InfluxDB connection (must match influxdb chart values)
+influxdb:
+  host: influxdb-service
+  port: 8086
+  token: ticker-secret-token
+  org: ticker
+  bucket: ticks

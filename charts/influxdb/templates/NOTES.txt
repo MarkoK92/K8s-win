@@ -1,0 +1,16 @@
+🚀 InfluxDB has been deployed!
+
+HTTP API:
+  influxdb-service:8086 (from within the cluster)
+
+Credentials:
+  Username: {{ .Values.setup.username }}
+  Org:      {{ .Values.setup.org }}
+  Bucket:   {{ .Values.setup.bucket }}
+  Token:    {{ .Values.setup.token }}
+
+Retention: {{ .Values.setup.retention }}
+
+Verify:
+  kubectl get pods -l app=influxdb
+  kubectl logs -l app=influxdb

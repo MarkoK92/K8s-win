@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: influxdb
+  labels:
+    {{- include "influxdb.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      {{- include "influxdb.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "influxdb.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: influxdb
+          image: {{ .Values.image }}
+          ports:
+            - containerPort: 8086
+              name: http
+          env:
+            - name: DOCKER_INFLUXDB_INIT_MODE
+              value: "setup"
+            - name: DOCKER_INFLUXDB_INIT_USERNAME
+              value: {{ .Values.setup.username | quote }}
+            - name: DOCKER_INFLUXDB_INIT_PASSWORD
+              value: {{ .Values.setup.password | quote }}
+            - name: DOCKER_INFLUXDB_INIT_ORG
+              value: {{ .Values.setup.org | quote }}
+            - name: DOCKER_INFLUXDB_INIT_BUCKET
+              value: {{ .Values.setup.bucket | quote }}
+            - name: DOCKER_INFLUXDB_INIT_RETENTION
+              value: {{ .Values.setup.retention | quote }}
+            - name: DOCKER_INFLUXDB_INIT_ADMIN_TOKEN
+              value: {{ .Values.setup.token | quote }}
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu | quote }}
+              memory: {{ .Values.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu | quote }}
+              memory: {{ .Values.resources.limits.memory | quote }}
+          volumeMounts:
+            - name: influxdb-data
+              mountPath: /var/lib/influxdb2
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8086
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8086
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: influxdb-data
+          persistentVolumeClaim:
+            claimName: influxdb-data

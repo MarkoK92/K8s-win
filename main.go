@@ -1,62 +1,20 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
+	"k8s-ingester/pb"
 	"log"
 	"net"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
-	"k8s-ingester/pb"
-
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/nats-io/nats.go"
 	"google.golang.org/protobuf/proto"
 )
-
-// HistoryEntry represents a single price point
-type HistoryEntry struct {
-	Time  int64   `json:"t"`
-	Price float64 `json:"p"`
-}
-
-var (
-	historyDir  = "data"
-	historyLock sync.Mutex
-	maxHistory  = 200 // Keep last 200 ticks per symbol
-)
-
-func appendToHistory(symbol string, price float64, timestamp int64) {
-	historyLock.Lock()
-	defer historyLock.Unlock()
-
-	// Ensure data directory exists
-	os.MkdirAll(historyDir, 0755)
-
-	filePath := filepath.Join(historyDir, symbol+".json")
-
-	// Read existing history
-	var history []HistoryEntry
-	if data, err := os.ReadFile(filePath); err == nil {
-		json.Unmarshal(data, &history)
-	}
-
-	// Append new entry
-	history = append(history, HistoryEntry{Time: timestamp, Price: price})
-
-	// Trim to max size
-	if len(history) > maxHistory {
-		history = history[len(history)-maxHistory:]
-	}
-
-	// Write back
-	data, _ := json.Marshal(history)
-	os.WriteFile(filePath, data, 0644)
-}
 
 func main() {
 	// 1. Connect to NATS
@@ -66,7 +24,37 @@ func main() {
 	}
 	defer nc.Close()
 
-	// 2. Listen for UDP on 5005
+	// 2. Connect to InfluxDB
+	influxURL := os.Getenv("INFLUXDB_URL")
+	if influxURL == "" {
+		influxURL = "http://localhost:8086"
+	}
+	influxToken := os.Getenv("INFLUXDB_TOKEN")
+	if influxToken == "" {
+		influxToken = "ticker-secret-token"
+	}
+	influxOrg := os.Getenv("INFLUXDB_ORG")
+	if influxOrg == "" {
+		influxOrg = "ticker"
+	}
+	influxBucket := os.Getenv("INFLUXDB_BUCKET")
+	if influxBucket == "" {
+		influxBucket = "ticks"
+	}
+
+	client := influxdb2.NewClient(influxURL, influxToken)
+	defer client.Close()
+	writeAPI := client.WriteAPIBlocking(influxOrg, influxBucket)
+
+	// Verify InfluxDB connection
+	ok, err := client.Health(context.Background())
+	if err != nil {
+		log.Printf("⚠️  InfluxDB not reachable at %s: %v (will retry on each write)", influxURL, err)
+	} else {
+		log.Printf("✅ InfluxDB connected: %s (status: %s)", influxURL, ok.Status)
+	}
+
+	// 3. Listen for UDP on 5005
 	addr := net.UDPAddr{Port: 5005, IP: net.ParseIP("0.0.0.0")}
 	conn, err := net.ListenUDP("udp", &addr)
 	if err != nil {
@@ -74,8 +62,8 @@ func main() {
 	}
 	defer conn.Close()
 
-	fmt.Println("🚀 High-Speed Ingester: BINARY MODE + HISTORY ACTIVE")
-	fmt.Println("📁 Writing history to ./data/*.json")
+	fmt.Println("🚀 High-Speed Ingester: BINARY MODE + INFLUXDB ACTIVE")
+	fmt.Printf("📊 Writing to InfluxDB: %s (org: %s, bucket: %s)\n", influxURL, influxOrg, influxBucket)
 
 	buf := make([]byte, 1024)
 	for {
@@ -90,8 +78,9 @@ func main() {
 
 		price, _ := strconv.ParseFloat(parts[1], 64)
 		timestamp := time.Now().UnixMilli()
+		now := time.Now()
 
-		// 3. Create the Protobuf Object
+		// 4. Create the Protobuf Object
 		update := &pb.TickerUpdate{
 			Symbol:    parts[0],
 			Price:     price,
@@ -99,18 +88,25 @@ func main() {
 			Timestamp: timestamp,
 		}
 
-		// 4. MARSHAL: Convert the object to binary bytes
+		// 5. MARSHAL: Convert the object to binary bytes
 		binaryData, err := proto.Marshal(update)
 		if err != nil {
 			log.Println("Encoding error:", err)
 			continue
 		}
 
-		// 5. Publish binary bytes to NATS
+		// 6. Publish binary bytes to NATS
 		nc.Publish("market.ticks", binaryData)
 
-		// 6. Write to history file
-		go appendToHistory(parts[0], price, timestamp)
+		// 7. Write to InfluxDB
+		p := influxdb2.NewPoint("ticks",
+			map[string]string{"symbol": parts[0]},
+			map[string]interface{}{"price": price},
+			now,
+		)
+		if err := writeAPI.WritePoint(context.Background(), p); err != nil {
+			log.Printf("InfluxDB write error: %v", err)
+		}
 
 		fmt.Printf("Sent: %s -> $%.2f\n", update.Symbol, update.Price)
 	}

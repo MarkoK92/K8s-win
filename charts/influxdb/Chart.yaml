@@ -1,0 +1,5 @@
+apiVersion: v2
+name: influxdb
+description: InfluxDB 2.x time-series database for ticker price history
+version: 0.1.0
+appVersion: "2.7"

@@ -75,7 +75,7 @@ data:
             const prices = {};
             const prevPrices = {};
             const MAX_POINTS = 50;
-            const SYMBOLS = ['BTC-USD', 'ETH-USD', 'SOL-USD'];
+            const SYMBOLS = ['BTC-USD', 'ETH-USD', 'SOL-USD', 'DOGE-USD', 'ADA-USD'];
             
             const log = (m) => { 
                 const d = document.getElementById('debug');
@@ -165,10 +165,11 @@ data:
             }
 
             async function loadHistory() {
-                log("Loading historical data...");
+                log("Loading historical data from InfluxDB...");
+                const API_URL = 'http://127.0.0.1:30090';
                 for (const symbol of SYMBOLS) {
                     try {
-                        const res = await fetch(`/data/${symbol}.json`);
+                        const res = await fetch(`${API_URL}/api/history/${symbol}`);
                         if (res.ok) {
                             const history = await res.json();
                             log(`Loaded ${history.length} points for ${symbol}`);
@@ -178,7 +179,7 @@ data:
                             }
                         }
                     } catch (e) {
-                        log(`No history for ${symbol}`);
+                        log(`No history for ${symbol} (API may not be running)`);
                         createCard(symbol);
                     }
                 }

@@ -5,19 +5,57 @@ A real-time price ticker running on Kubernetes with NATS messaging and **Protoco
 ## Architecture
 
 ```
-┌─────────────┐     UDP      ┌─────────────┐   Protobuf    ┌─────────────┐
-│  PowerShell │ ──────────►  │ Go Ingester │ ──────────►   │    NATS     │
-│   or Bash   │   :5005      │  (Binary)   │   :4222       │   Server    │
-└─────────────┘              └─────────────┘               └──────┬──────┘
-                                                                  │
-                                                           WebSocket :8080
-                                                                  │
-                                                                  ▼
-                             ┌─────────────┐               ┌─────────────┐
-                             │   Browser   │ ◄──────────── │   Browser   │
-                             │  (UI Page)  │   :8080       │  via nginx  │
-                             └─────────────┘               └─────────────┘
+                    ┌──────────────────────────────────────────────────────────┐
+                    │                   Kubernetes Cluster                     │
+                    │                                                          │
+ UDP :5005          │   ┌─────────────┐  proto.Marshal   ┌─────────────┐      │
+───────────────────────►│ Go Ingester │─────────────────►│    NATS     │      │
+ ticker-ingester-   │   │ (sidecar)   │  TCP :4222       │   Server    │      │
+ service            │   └─────────────┘  nats-service    └──────┬──────┘      │
+                    │                                           │              │
+                    │                                    WebSocket :8080       │
+                    │                                    nats-gateway-service  │
+                    │                                           │              │
+                    │   ┌─────────────┐                         │              │
+ HTTP :80           │   │   nginx     │         Browser connects│              │
+◄───────────────────│   │   (UI)      │◄─ 1. loads HTML page   │              │
+ ticker-ui-service  │   └─────────────┘   2. then connects ────┘              │
+                    │                        directly to NATS                  │
+                    │                        via WebSocket                     │
+                    └──────────────────────────────────────────────────────────┘
 ```
+
+## Understanding the Services
+
+There are **4 Kubernetes Services**, each with a specific role:
+
+### 1. `ticker-ingester-service` (NodePort :30005 → :5005, UDP)
+- **Receives** raw UDP text from outside the cluster (e.g. `BTC-USD,74250.65`)
+- The Go ingester parses the text, encodes it with `proto.Marshal()` into binary Protobuf, and publishes to NATS
+- Written in Go (`main.go`)
+
+### 2. `nats-service` (ClusterIP :4222, TCP)
+- **Internal only** — not accessible from outside the cluster
+- The Go ingester connects here to **publish** messages to NATS
+- Uses the native NATS TCP protocol (fast, binary)
+
+### 3. `nats-gateway-service` (NodePort :30080 → :8080, WebSocket)
+- Exposes the **same NATS server** but on its WebSocket port
+- The browser's JavaScript connects here to **subscribe** to live price updates
+- Browsers can't use raw TCP, so NATS provides a WebSocket interface on a separate port
+
+### 4. `ticker-ui-service` (NodePort :30007 → :80, HTTP)
+- Serves the HTML page via nginx
+- The browser loads the page from here, then the page's JavaScript connects **directly to NATS** via `nats-gateway-service` for live data
+
+### Key Insight: NATS = One Server, Two Ports
+
+| Port | Protocol | Service | Who Connects |
+|------|----------|---------|-------------|
+| 4222 | TCP (native NATS) | `nats-service` | Go ingester (publisher) |
+| 8080 | WebSocket | `nats-gateway-service` | Browser JavaScript (subscriber) |
+
+The browser does **not** get data through the UI service — it connects directly to NATS over WebSocket after loading the HTML page.
 
 ## Components
 
@@ -38,6 +76,8 @@ A real-time price ticker running on Kubernetes with NATS messaging and **Protoco
 | `configmaps.yaml` | UI HTML code + NATS server config |
 | `deployments.yaml` | NATS and ticker-app deployments |
 | `services.yaml` | All services (internal + external) |
+| `charts/` | Helm charts (nats + ticker-app) |
+| `argocd/` | Argo CD Application manifests (GitOps) |
 
 ---
 
@@ -699,6 +739,37 @@ Once set up, your workflow becomes:
 ### Price not updating
 - Verify Go ingester shows "Sent: ..." messages
 - Check that UDP is being sent to port 5005 (not 30005 when running locally)
+
+### Argo CD sync fails: "field is immutable" or selector mismatch
+
+This happens when you have **existing Helm releases** and then add Argo CD. Both try to manage the same resources but with different labels:
+
+- `helm install ticker` creates resources with `app.kubernetes.io/instance: ticker`
+- Argo CD Application named `ticker-app` tries to set `app.kubernetes.io/instance: ticker-app`
+- Kubernetes rejects this because **Deployment selectors are immutable** — you can't change them on an existing Deployment
+
+**Fix — remove old Helm releases first:**
+```bash
+helm uninstall ticker
+helm uninstall nats
+```
+
+If Argo CD still shows the cached error after uninstalling, delete and re-apply the Application:
+```bash
+kubectl delete application ticker-app -n argocd
+kubectl apply -f argocd/ticker-app.yaml
+```
+
+> **Key lesson:** You cannot have both manual `helm install` and Argo CD managing the same resources. Pick one. Once Argo CD is set up, it is the sole owner — deploy everything via `git push`.
+
+### Argo CD: "app path does not exist"
+
+This means the `charts/` folder hasn't been pushed to GitHub yet. Argo CD looks at your **remote repo**, not your local files:
+```bash
+git add .
+git commit -m "Add Helm charts and Argo CD"
+git push
+```
 
 ---
 

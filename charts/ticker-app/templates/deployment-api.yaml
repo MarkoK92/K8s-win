@@ -1,0 +1,132 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ticker-api
+  labels:
+    {{- include "ticker-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: ticker-api
+      app.kubernetes.io/name: {{ include "ticker-app.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: ticker-api
+        app.kubernetes.io/name: {{ include "ticker-app.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: api
+          image: {{ .Values.api.image }}
+          workingDir: /app
+          ports:
+            - containerPort: 8090
+              name: http
+          env:
+            - name: INFLUXDB_URL
+              value: "http://{{ .Values.influxdb.host }}:{{ .Values.influxdb.port }}"
+            - name: INFLUXDB_TOKEN
+              value: {{ .Values.influxdb.token | quote }}
+            - name: INFLUXDB_ORG
+              value: {{ .Values.influxdb.org | quote }}
+            - name: INFLUXDB_BUCKET
+              value: {{ .Values.influxdb.bucket | quote }}
+            - name: PORT
+              value: "8090"
+          resources:
+            requests:
+              cpu: {{ .Values.api.resources.requests.cpu | quote }}
+              memory: {{ .Values.api.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.api.resources.limits.cpu | quote }}
+              memory: {{ .Values.api.resources.limits.memory | quote }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cd /app && rm -rf go.* && go mod init ticker-api &&
+              cat > main.go << 'GOEOF'
+              package main
+
+              import (
+                "context"
+                "encoding/json"
+                "fmt"
+                "log"
+                "net/http"
+                "os"
+                "strings"
+
+                influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+              )
+
+              type HistoryPoint struct {
+                Time  int64   `json:"t"`
+                Price float64 `json:"p"`
+              }
+
+              func main() {
+                influxURL := os.Getenv("INFLUXDB_URL")
+                influxToken := os.Getenv("INFLUXDB_TOKEN")
+                influxOrg := os.Getenv("INFLUXDB_ORG")
+                influxBucket := os.Getenv("INFLUXDB_BUCKET")
+                port := os.Getenv("PORT")
+                if port == "" { port = "8090" }
+
+                client := influxdb2.NewClient(influxURL, influxToken)
+                defer client.Close()
+                queryAPI := client.QueryAPI(influxOrg)
+
+                corsHandler := func(next http.HandlerFunc) http.HandlerFunc {
+                  return func(w http.ResponseWriter, r *http.Request) {
+                    w.Header().Set("Access-Control-Allow-Origin", "*")
+                    w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+                    w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+                    if r.Method == "OPTIONS" { w.WriteHeader(200); return }
+                    next(w, r)
+                  }
+                }
+
+                http.HandleFunc("/api/history/", corsHandler(func(w http.ResponseWriter, r *http.Request) {
+                  symbol := strings.TrimPrefix(r.URL.Path, "/api/history/")
+                  if symbol == "" { http.Error(w, "Missing symbol", 400); return }
+
+                  query := fmt.Sprintf("from(bucket: \"%s\") |> range(start: -24h) |> filter(fn: (r) => r._measurement == \"ticks\") |> filter(fn: (r) => r.symbol == \"%s\") |> filter(fn: (r) => r._field == \"price\") |> sort(columns: [\"_time\"])", influxBucket, symbol)
+
+                  result, err := queryAPI.Query(context.Background(), query)
+                  if err != nil { log.Printf("Query error: %v", err); http.Error(w, "Query failed", 500); return }
+
+                  var points []HistoryPoint
+                  for result.Next() {
+                    record := result.Record()
+                    points = append(points, HistoryPoint{Time: record.Time().UnixMilli(), Price: record.Value().(float64)})
+                  }
+                  if points == nil { points = []HistoryPoint{} }
+
+                  w.Header().Set("Content-Type", "application/json")
+                  json.NewEncoder(w).Encode(points)
+                  log.Printf("Returned %d points for %s", len(points), symbol)
+                }))
+
+                http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200); w.Write([]byte("ok")) })
+
+                fmt.Printf("Ticker API listening on :%s\n", port)
+                log.Fatal(http.ListenAndServe(":" + port, nil))
+              }
+              GOEOF
+              go mod tidy && go run main.go
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 20
+            periodSeconds: 5

@@ -1,0 +1,26 @@
+# InfluxDB Configuration
+replicas: 1
+
+image: influxdb:2.7-alpine
+
+# InfluxDB 2.x setup (used on first boot)
+setup:
+  username: admin
+  password: tickerpass123
+  org: ticker
+  bucket: ticks
+  retention: 24h       # Auto-delete data older than 24 hours
+  token: ticker-secret-token  # API token for read/write access
+
+# Persistent storage for data durability
+storage:
+  size: 1Gi
+
+# Resource limits
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"

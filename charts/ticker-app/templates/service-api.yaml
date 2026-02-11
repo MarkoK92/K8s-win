@@ -1,0 +1,19 @@
+# Ticker API Service (browser fetches history from here)
+apiVersion: v1
+kind: Service
+metadata:
+  name: ticker-api-service
+  labels:
+    {{- include "ticker-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  type: NodePort
+  selector:
+    app: ticker-api
+    app.kubernetes.io/name: {{ include "ticker-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - port: 8090
+      targetPort: 8090
+      nodePort: {{ .Values.api.nodePort }}
+      name: http
