@@ -19,7 +19,7 @@
             },
             "options": {
                 "mode": "markdown",
-                "content": "| Service | Cluster URL | User/Pass |\n|---|---|---|\n| **Grafana** | [http://grafana:30030](http://localhost:30030) | `admin` / `ticker` |\n| **Argo CD** | [https://argocd:8443](https://localhost:8443) | `admin` / *(check secret)* |\n| **Ticker UI** | [http://ticker-ui:8080](http://localhost:8080) | - |\n| **Ticker API** | [http://ticker-api:30090](http://localhost:30090/api/history/BTC-USD) | - |\n| **InfluxDB** | [http://influxdb:8086](http://localhost:8086) | `admin` / `tickerpass123` |"
+                "content": "| Service | Local URL | User/Pass |\n|---|---|---|\n| **Grafana** | [http://localhost:30030](http://localhost:30030) | `admin` / `ticker` |\n| **Argo CD** | [https://localhost:8443](https://localhost:8443) | `admin` / *(check secret)* |\n| **Ticker UI** | [http://localhost:8080](http://localhost:8080) | - |\n| **Ticker API** | [http://localhost:30090/api/history/BTC-USD](http://localhost:30090/api/history/BTC-USD) | - |\n| **InfluxDB** | [http://localhost:8086](http://localhost:8086) | `admin` / `tickerpass123` |"
             }
         },
         {
@@ -79,12 +79,12 @@
             },
             "targets": [
                 {
-                    "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{image!=\"\", container!=\"POD\"}[5m]))",
+                    "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total[1m]))",
                     "format": "table",
                     "legendFormat": "CPU Cores"
                 },
                 {
-                    "expr": "sum by (pod) (container_memory_usage_bytes{image!=\"\", container!=\"POD\"})",
+                    "expr": "sum by (pod) (container_memory_usage_bytes)",
                     "format": "table",
                     "legendFormat": "RAM Usage"
                 },
@@ -94,7 +94,7 @@
                     "legendFormat": "Restarts"
                 },
                 {
-                    "expr": "sum by (pod) (rate(container_network_receive_bytes_total{namespace=\"default\"}[5m]))",
+                    "expr": "sum by (pod) (rate(container_network_receive_bytes_total{namespace=\"default\"}[1m]))",
                     "format": "table",
                     "legendFormat": "Net RX/s"
                 }
@@ -197,7 +197,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(container_cpu_usage_seconds_total{image!=\"\", container!=\"POD\"}[1m])) by (pod)",
+                    "expr": "sum(rate(container_cpu_usage_seconds_total[1m])) by (pod)",
                     "legendFormat": "{{pod}}"
                 }
             ],
@@ -218,7 +218,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(container_memory_usage_bytes{image!=\"\", container!=\"POD\"}) by (pod)",
+                    "expr": "sum(container_memory_usage_bytes) by (pod)",
                     "legendFormat": "{{pod}}"
                 }
             ],
@@ -264,7 +264,7 @@
             },
             "targets": [
                 {
-                    "query": "from(bucket: \"ticks\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\") |> filter(fn: (r) => r[\"_field\"] == \"p\") |> count()",
+                    "query": "from(bucket: \"ticks\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\") |> filter(fn: (r) => r[\"_field\"] == \"price\") |> count()",
                     "refId": "A"
                 }
             ],
@@ -292,7 +292,7 @@
             },
             "targets": [
                 {
-                    "query": "from(bucket: \"ticks\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\") |> filter(fn: (r) => r[\"_field\"] == \"p\") |> group(columns: [\"symbol\"]) |> last() |> keep(columns: [\"symbol\", \"_time\", \"_value\"])",
+                    "query": "from(bucket: \"ticks\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\") |> filter(fn: (r) => r[\"_field\"] == \"price\") |> group(columns: [\"symbol\"]) |> last() |> keep(columns: [\"symbol\", \"_time\", \"_value\"])",
                     "refId": "A",
                     "resultFormat": "table"
                 }
@@ -353,6 +353,23 @@
                     }
                 }
             }
+        },
+        {
+            "title": "DEBUG: All Container Metrics",
+            "type": "table",
+            "gridPos": {
+                "h": 6,
+                "w": 24,
+                "x": 0,
+                "y": 42
+            },
+            "targets": [
+                {
+                    "expr": "count({__name__=~\"container_.*\"}) by (__name__)",
+                    "format": "table"
+                }
+            ],
+            "title": "DEBUG - List of available container metrics"
         }
     ],
     "schemaVersion": 36,
@@ -372,8 +389,8 @@
     },
     "timepicker": {},
     "timezone": "",
-    "title": "Simple Metrics (Flux)",
+    "title": "Simple Metrics (Debug)",
     "uid": "simple-metrics",
-    "version": 6,
+    "version": 9,
     "weekStart": ""
 }
