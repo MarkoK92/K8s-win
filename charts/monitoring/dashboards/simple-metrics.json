@@ -9,13 +9,27 @@
     "links": [],
     "panels": [
         {
+            "title": "Access Points (Port-Forward Reference)",
+            "type": "text",
+            "gridPos": {
+                "h": 6,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "options": {
+                "mode": "markdown",
+                "content": "| Service | Local URL | User/Pass |\n|---|---|---|\n| **Grafana** | [http://localhost:30030](http://localhost:30030) | `admin` / `ticker` |\n| **Argo CD** | [https://localhost:8443](https://localhost:8443) | `admin` / *(check secret)* |\n| **Ticker UI** | [http://localhost:8080](http://localhost:8080) | - |\n| **Ticker API** | [http://localhost:30090/api/history/BTC-USD](http://localhost:30090/api/history/BTC-USD) | - |\n| **InfluxDB** | [http://localhost:8086](http://localhost:8086) | `admin` / `tickerpass123` |"
+            }
+        },
+        {
             "title": "Cluster CPU Usage",
             "type": "timeseries",
             "gridPos": {
                 "h": 7,
                 "w": 12,
                 "x": 0,
-                "y": 0
+                "y": 6
             },
             "targets": [
                 {
@@ -38,7 +52,7 @@
                 "h": 7,
                 "w": 12,
                 "x": 12,
-                "y": 0
+                "y": 6
             },
             "targets": [
                 {
@@ -55,37 +69,32 @@
             }
         },
         {
-            "title": "Running Pods & Resources",
+            "title": "Running Pods (Resources & Network)",
             "type": "table",
             "gridPos": {
                 "h": 10,
                 "w": 24,
                 "x": 0,
-                "y": 7
+                "y": 13
             },
             "targets": [
                 {
-                    "expr": "sum by (pod, namespace) (rate(container_cpu_usage_seconds_total{image!=\"\"}[5m]))",
+                    "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{image!=\"\", container!=\"POD\"}[5m])) * (on(pod) group_left(phase) kube_pod_status_phase{phase=\"Running\"})",
                     "format": "table",
                     "legendFormat": "CPU Cores"
                 },
                 {
-                    "expr": "sum by (pod, namespace) (container_memory_usage_bytes{image!=\"\"})",
+                    "expr": "sum by (pod) (container_memory_usage_bytes{image!=\"\", container!=\"POD\"}) * (on(pod) group_left(phase) kube_pod_status_phase{phase=\"Running\"})",
                     "format": "table",
                     "legendFormat": "RAM Usage"
                 },
                 {
-                    "expr": "sum by (pod, namespace) (kube_pod_status_ready{condition=\"true\"})",
-                    "format": "table",
-                    "legendFormat": "Ready"
-                },
-                {
-                    "expr": "sum by (pod, namespace) (kube_pod_container_status_restarts_total)",
+                    "expr": "sum by (pod) (kube_pod_container_status_restarts_total) * (on(pod) group_left(phase) kube_pod_status_phase{phase=\"Running\"})",
                     "format": "table",
                     "legendFormat": "Restarts"
                 },
                 {
-                    "expr": "sum by (pod, namespace) (rate(container_network_receive_bytes_total[5m]))",
+                    "expr": "sum by (pod) (rate(container_network_receive_bytes_total{namespace=\"default\"}[5m])) * (on(pod) group_left(phase) kube_pod_status_phase{phase=\"Running\"})",
                     "format": "table",
                     "legendFormat": "Net RX/s"
                 }
@@ -102,11 +111,19 @@
                             "Time": true
                         },
                         "renameByName": {
-                            "Value #A": "CPU Cores",
+                            "Value #A": "CPU",
                             "Value #B": "RAM",
-                            "Value #C": "Ready",
-                            "Value #D": "Restarts",
-                            "Value #E": "Net RX/s"
+                            "Value #C": "Restarts",
+                            "Value #D": "RX/s"
+                        }
+                    }
+                },
+                {
+                    "id": "filterByName",
+                    "options": {
+                        "exclude": {
+                            "phase": true,
+                            "Value": true
                         }
                     }
                 }
@@ -116,15 +133,6 @@
                     "custom": {
                         "displayMode": "auto",
                         "align": "auto"
-                    },
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            }
-                        ]
                     }
                 },
                 "overrides": [
@@ -143,7 +151,7 @@
                     {
                         "matcher": {
                             "id": "byName",
-                            "options": "Net RX/s"
+                            "options": "RX/s"
                         },
                         "properties": [
                             {
@@ -175,50 +183,124 @@
                                 }
                             }
                         ]
-                    },
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "Ready"
-                        },
-                        "properties": [
-                            {
-                                "id": "mappings",
-                                "value": [
-                                    {
-                                        "type": "value",
-                                        "options": {
-                                            "0": {
-                                                "text": "Not Ready",
-                                                "color": "red"
-                                            },
-                                            "1": {
-                                                "text": "Running",
-                                                "color": "green"
-                                            }
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
                     }
                 ]
             }
         },
         {
-            "title": "Services & Ports",
-            "type": "table",
+            "title": "CPU Usage per Pod",
+            "type": "timeseries",
             "gridPos": {
                 "h": 7,
-                "w": 12,
+                "w": 8,
                 "x": 0,
-                "y": 17
+                "y": 23
             },
             "targets": [
                 {
-                    "expr": "kube_service_info",
-                    "format": "table",
-                    "instant": true
+                    "expr": "sum(rate(container_cpu_usage_seconds_total{image!=\"\", container!=\"POD\"}[1m])) by (pod) * on(pod) group_left(phase) kube_pod_status_phase{phase=\"Running\"}",
+                    "legendFormat": "{{pod}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short"
+                }
+            }
+        },
+        {
+            "title": "Memory Usage per Pod",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 7,
+                "w": 8,
+                "x": 8,
+                "y": 23
+            },
+            "targets": [
+                {
+                    "expr": "sum(container_memory_usage_bytes{image!=\"\", container!=\"POD\"}) by (pod) * on(pod) group_left(phase) kube_pod_status_phase{phase=\"Running\"}",
+                    "legendFormat": "{{pod}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes"
+                }
+            }
+        },
+        {
+            "title": "Network Traffic (RX)",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 7,
+                "w": 8,
+                "x": 16,
+                "y": 23
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"default\"}[1m])) by (pod) * on(pod) group_left(phase) kube_pod_status_phase{phase=\"Running\"}",
+                    "legendFormat": "{{pod}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "Bps"
+                }
+            }
+        },
+        {
+            "title": "Market Data: Total Ticks Recorded",
+            "type": "stat",
+            "datasource": {
+                "type": "influxdb",
+                "uid": "InfluxDB"
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 8,
+                "x": 0,
+                "y": 30
+            },
+            "targets": [
+                {
+                    "query": "SELECT count(\"p\") FROM \"ticks\" WHERE $timeFilter GROUP BY \"symbol\"",
+                    "orderByTime": "ASC",
+                    "policy": "default",
+                    "refId": "A",
+                    "resultFormat": "time_series"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short",
+                    "color": {
+                        "mode": "continuous-GrYlRd"
+                    }
+                }
+            }
+        },
+        {
+            "title": "Market Data: Freshness (Min/Max Date)",
+            "type": "table",
+            "datasource": {
+                "type": "influxdb",
+                "uid": "InfluxDB"
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 16,
+                "x": 8,
+                "y": 30
+            },
+            "targets": [
+                {
+                    "query": "SELECT first(\"p\"), last(\"p\") FROM \"ticks\" WHERE $timeFilter GROUP BY \"symbol\"",
+                    "orderByTime": "ASC",
+                    "policy": "default",
+                    "refId": "A",
+                    "resultFormat": "table"
                 }
             ],
             "transformations": [
@@ -226,10 +308,12 @@
                     "id": "organize",
                     "options": {
                         "excludeByName": {
-                            "Time": true,
-                            "Value": true
+                            "Time": true
                         },
-                        "renameByName": {}
+                        "renameByName": {
+                            "first": "Oldest Tick",
+                            "last": "Newest Tick"
+                        }
                     }
                 }
             ]
@@ -238,10 +322,10 @@
             "title": "PVC Storage Usage",
             "type": "table",
             "gridPos": {
-                "h": 7,
-                "w": 12,
-                "x": 12,
-                "y": 17
+                "h": 6,
+                "w": 24,
+                "x": 0,
+                "y": 36
             },
             "targets": [
                 {
@@ -277,50 +361,26 @@
                     }
                 }
             }
-        },
-        {
-            "title": "Network Traffic (Bytes/sec)",
-            "type": "timeseries",
-            "gridPos": {
-                "h": 7,
-                "w": 24,
-                "x": 0,
-                "y": 24
-            },
-            "targets": [
-                {
-                    "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"default\"}[1m])) by (pod)",
-                    "legendFormat": "RX {{pod}}"
-                },
-                {
-                    "expr": "sum(rate(container_network_transmit_bytes_total{namespace=\"default\"}[1m])) by (pod)",
-                    "legendFormat": "TX {{pod}}"
-                }
-            ],
-            "fieldConfig": {
-                "defaults": {
-                    "unit": "Bps"
-                }
-            }
         }
     ],
     "schemaVersion": 36,
     "style": "dark",
     "tags": [
         "simple",
-        "detailed"
+        "detailed",
+        "influxdb"
     ],
     "templating": {
         "list": []
     },
     "time": {
-        "from": "now-1h",
+        "from": "now-6h",
         "to": "now"
     },
     "timepicker": {},
     "timezone": "",
-    "title": "Simple Metrics (Detailed)",
+    "title": "Simple Metrics + Market Data",
     "uid": "simple-metrics",
-    "version": 3,
+    "version": 5,
     "weekStart": ""
 }
