@@ -5,29 +5,31 @@ A real-time price ticker running on Kubernetes with NATS messaging and **Protoco
 ## Architecture
 
 ```
-                    ┌──────────────────────────────────────────────────────────┐
-                    │                   Kubernetes Cluster                     │
-                    │                                                          │
- UDP :5005          │   ┌─────────────┐  proto.Marshal   ┌─────────────┐      │
-───────────────────────►│ Go Ingester │─────────────────►│    NATS     │      │
- ticker-ingester-   │   │ (sidecar)   │  TCP :4222       │   Server    │      │
- service            │   └─────────────┘  nats-service    └──────┬──────┘      │
-                    │                                           │              │
-                    │                                    WebSocket :8080       │
-                    │                                    nats-gateway-service  │
-                    │                                           │              │
-                    │   ┌─────────────┐                         │              │
- HTTP :80           │   │   nginx     │         Browser connects│              │
-◄───────────────────│   │   (UI)      │◄─ 1. loads HTML page   │              │
- ticker-ui-service  │   └─────────────┘   2. then connects ────┘              │
-                    │                        directly to NATS                  │
-                    │                        via WebSocket                     │
-                    └──────────────────────────────────────────────────────────┘
+                    ┌───────────────────────────────────────────────────────────┐
+                    │                   Kubernetes Cluster                      │
+                    │                                                           │
+ UDP :5005          │  ┌───────────┐ publish  ┌──────┐                          │
+────────────────────►  │ Ingester  │────────► │ NATS │──► WebSocket (live)      │
+                    │  │   (Go)    │          └──────┘                          │
+                    │  │           │                                            │
+                    │  │           │──write──► ┌──────────┐                     │
+                    │  └───────────┘           │ InfluxDB │ ← 24h retention     │
+                    │                          └────┬─────┘                     │
+                    │                               │ query                     │
+                    │  ┌───────────┐           ┌────┴─────┐                     │
+ HTTP :80           │  │  nginx    │           │ API (Go) │ ← /api/history      │
+◄───────────────────│  │  (UI)     │           └──────────┘                     │
+                    │  └───────────┘                                            │
+                    └───────────────────────────────────────────────────────────┘
 ```
+
+Browser flow:
+1. `GET /api/history/BTC-USD` → API queries InfluxDB → returns last 24h of ticks as JSON
+2. WebSocket → NATS → live ticks appended to chart
 
 ## Understanding the Services
 
-There are **4 Kubernetes Services**, each with a specific role:
+There are **5 Kubernetes Services**, each with a specific role:
 
 ### 1. `ticker-ingester-service` (NodePort :30005 → :5005, UDP)
 - **Receives** raw UDP text from outside the cluster (e.g. `BTC-USD,74250.65`)
@@ -48,6 +50,11 @@ There are **4 Kubernetes Services**, each with a specific role:
 - Serves the HTML page via nginx
 - The browser loads the page from here, then the page's JavaScript connects **directly to NATS** via `nats-gateway-service` for live data
 
+### 5. `ticker-api-service` (NodePort :30090 → :8090, HTTP)
+- **History API** — browser calls `GET /api/history/BTC-USD` on page load
+- Queries InfluxDB and returns the last 24h of price data as JSON
+- Enables chart backfill before live NATS data starts streaming
+
 ### Key Insight: NATS = One Server, Two Ports
 
 | Port | Protocol | Service | Who Connects |
@@ -62,21 +69,24 @@ The browser does **not** get data through the UI service — it connects directl
 | Component | Technology | Purpose |
 |-----------|------------|---------|
 | **NATS Server** | `nats:latest` | Message broker with WebSocket support |
-| **Go Ingester** | Go + Protobuf | Receives UDP, encodes to Protobuf, publishes to NATS |
+| **Go Ingester** | Go + Protobuf + InfluxDB | Receives UDP, encodes to Protobuf, publishes to NATS, writes to InfluxDB |
+| **InfluxDB** | `influxdb:2.7-alpine` | Time-series database for price history (24h retention) |
+| **Ticker API** | Go | HTTP API querying InfluxDB for historical data |
 | **UI (nginx)** | `nginx:alpine` | Serves the HTML ticker page |
-| **Browser** | JavaScript | Decodes Protobuf, displays live prices |
+| **Browser** | JavaScript + Chart.js | Decodes Protobuf, displays live prices with charts |
 
 ## Files
 
 | File | Contents |
 |------|----------|
-| `main.go` | Go ingester with Protobuf encoding |
+| `main.go` | Go ingester — Protobuf + NATS + InfluxDB writes |
+| `api/main.go` | Go API server — queries InfluxDB for history |
 | `ticker.proto` | Protocol Buffers schema definition |
 | `pb/ticker.pb.go` | Generated Go Protobuf code |
 | `configmaps.yaml` | UI HTML code + NATS server config |
 | `deployments.yaml` | NATS and ticker-app deployments |
 | `services.yaml` | All services (internal + external) |
-| `charts/` | Helm charts (nats + ticker-app) |
+| `charts/` | Helm charts (nats + ticker-app + influxdb) |
 | `argocd/` | Argo CD Application manifests (GitOps) |
 
 ---
@@ -407,7 +417,11 @@ charts/
 │   ├── Chart.yaml
 │   ├── values.yaml
 │   └── templates/
-└── ticker-app/      # Ticker UI + ingester (config, deployment, services)
+├── ticker-app/      # Ticker UI + ingester + API (config, deployments, services)
+│   ├── Chart.yaml
+│   ├── values.yaml
+│   └── templates/
+└── influxdb/        # InfluxDB time-series database (deployment, service, PVC)
     ├── Chart.yaml
     ├── values.yaml
     └── templates/
@@ -544,6 +558,185 @@ selector:
 ```
 
 This guarantees the Deployment and Service selectors always match (if they don't match, the Service can't find the pods). The `| nindent 6` just adds 6 spaces of indentation.
+
+---
+
+## InfluxDB (Time-Series History)
+
+### Why InfluxDB?
+
+Previously, the ingester wrote price history to `data/*.json` files. This had problems:
+- **No retention** — files grew forever
+- **Pod restarts = data loss** — files stored inside the container
+- **Not queryable** — to get "last 1 hour of BTC", you had to load the entire file
+
+InfluxDB solves all of these:
+- **Retention policies** — data older than 24h is auto-deleted
+- **Persistent storage** — data survives pod restarts via PersistentVolumeClaim (1Gi)
+- **Time-range queries** — `range(start: -24h)` is built-in
+- **Built-in HTTP API** — no middleware needed
+
+### Data Flow
+
+```
+UDP tick → Go Ingester → proto.Marshal → NATS publish (live)
+                       → InfluxDB write  (history)
+
+Browser   → GET /api/history/BTC-USD → API → InfluxDB query → JSON response
+          → WebSocket → NATS → live updates appended to chart
+```
+
+### Data Volume
+
+| Metric | Value |
+|--------|-------|
+| Ticks/second | ~10 (5 pairs × 2/sec) |
+| Ticks/day | ~864,000 |
+| Raw size/day | ~86 MB |
+| Compressed (InfluxDB) | **~10 MB** |
+| PVC size | 1 Gi (enough for weeks) |
+| Retention | 24 hours (configurable) |
+
+### Configuration
+
+All settings are in `charts/influxdb/values.yaml`:
+
+```yaml
+setup:
+  username: admin
+  password: tickerpass123
+  org: ticker                # Organization name
+  bucket: ticks              # Where price data is stored
+  retention: 24h             # Auto-delete older data
+  token: ticker-secret-token # API token for read/write
+
+storage:
+  size: 1Gi                  # PersistentVolumeClaim size
+```
+
+> **Note:** The `token`, `org`, and `bucket` values must match in both `charts/influxdb/values.yaml` and `charts/ticker-app/values.yaml` (under the `influxdb:` section). They come pre-configured to match.
+
+### How the Ingester Writes to InfluxDB
+
+In `main.go`, after publishing to NATS, each tick is also written to InfluxDB:
+
+```go
+p := influxdb2.NewPoint("ticks",
+    map[string]string{"symbol": parts[0]},        // tag: BTC-USD
+    map[string]interface{}{"price": price},        // field: 74250.65
+    now,                                            // timestamp
+)
+writeAPI.WritePoint(context.Background(), p)
+```
+
+Connection is configured via environment variables: `INFLUXDB_URL`, `INFLUXDB_TOKEN`, `INFLUXDB_ORG`, `INFLUXDB_BUCKET`.
+For local development, defaults fall back to `http://localhost:8086`.
+
+---
+
+## Ticker API (History Service)
+
+### What It Does
+
+The Ticker API is a small Go HTTP server that queries InfluxDB and returns price history as JSON. The browser calls it on page load to backfill the chart before NATS live data starts streaming.
+
+### Endpoint
+
+```
+GET /api/history/{symbol}
+```
+
+**Example:**
+```bash
+curl http://127.0.0.1:30090/api/history/BTC-USD
+```
+
+**Response:**
+```json
+[
+  {"t": 1707700000000, "p": 74250.65},
+  {"t": 1707700000500, "p": 74251.10},
+  ...
+]
+```
+
+- `t` = timestamp in milliseconds (Unix epoch)
+- `p` = price
+- Returns the last 24 hours of data (matching InfluxDB's retention policy)
+
+### How the UI Uses It
+
+In the browser JavaScript:
+```javascript
+// On page load — fill charts with historical data
+const res = await fetch('http://127.0.0.1:30090/api/history/BTC-USD');
+const history = await res.json();
+for (const pt of history.slice(-50)) {
+    updateChart('BTC-USD', pt.p, pt.t);
+}
+
+// Then switch to live NATS WebSocket for real-time updates
+```
+
+### Port-Forward for Local Development
+
+```bash
+kubectl port-forward svc/ticker-api-service 30090:8090
+```
+
+---
+
+## When to Use Redis or ClickHouse
+
+We chose InfluxDB alone for this project. Here's when the other databases become worth adding:
+
+### Redis (In-Memory Cache)
+
+**What it does:** Stores recent data in RAM for sub-millisecond reads.
+
+**When to add it:**
+- **Thousands of concurrent users** hitting the same `/api/history/BTC-USD` endpoint — Redis serves cached results instantly instead of re-querying InfluxDB every time
+- **Real-time leaderboards or aggregations** — e.g. "top 5 movers in the last 5 minutes" computed and cached
+- **Session state** — if you add user accounts with watchlists or alerts
+
+**Why not now:**
+- InfluxDB handles our query load easily (~5 queries on page load, one per symbol)
+- Adding Redis means another Deployment, another Service, cache invalidation logic, and double-writes from the ingester
+- At our scale (~10 ticks/sec, 1 user), the complexity isn't justified
+
+**Architecture if added:**
+```
+Browser → API → Redis (cache hit? → return) → InfluxDB (cache miss? → query, cache, return)
+```
+
+### ClickHouse (Analytics Engine)
+
+**What it does:** Columnar database optimized for analytical queries across billions of rows.
+
+**When to add it:**
+- **Months or years of historical data** that you need to query fast (InfluxDB retention keeps only 24h)
+- **Complex aggregations** — e.g. "average daily closing price for the last 6 months, grouped by week"
+- **Multi-dimensional analytics** — e.g. correlating price moves with volume, volatility scoring
+- **Hundreds of symbols** instead of 5 — ClickHouse handles massive cardinality better
+
+**Why not now:**
+- We only store 24h of data for 5 symbols — InfluxDB handles this with ~10 MB
+- ClickHouse requires SQL knowledge and more cluster management
+- It doesn't have built-in retention policies like InfluxDB — you manage TTLs yourself
+- Overkill for a real-time dashboard; it shines for historical analytics dashboards
+
+### Decision Matrix
+
+| Criteria | InfluxDB ✅ | Redis | ClickHouse |
+|----------|-----------|-------|------------|
+| **Best for** | Time-series (our case) | Hot cache | Analytics at scale |
+| **Query speed** | Fast for recent data | Sub-millisecond | Fast for aggregations |
+| **Data volume** | MBs to low GBs | MBs (RAM-limited) | GBs to TBs |
+| **Retention** | Built-in (`24h`) | TTL per key | Manual / TTL tables |
+| **Complexity** | Low (single binary) | Low (but adds a layer) | Medium-High |
+| **Add when** | ✅ Now (default) | 1000+ users | Months of history / analytics |
+
+> **Rule of thumb:** Start with InfluxDB alone. Add Redis when read traffic is the bottleneck. Add ClickHouse when you need long-term analytics that InfluxDB's retention window can't cover.
 
 ---
 
