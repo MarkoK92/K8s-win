@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: simple-metrics-dashboard
+  namespace: {{ .Release.Namespace }}
+  labels:
+    grafana_dashboard: "1"
+data:
+  simple-metrics.json: |-
+{{ .Files.Get "dashboards/simple-metrics.json" | indent 4 }}

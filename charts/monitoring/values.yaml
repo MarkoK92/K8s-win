@@ -12,6 +12,11 @@ kube-prometheus-stack:
       type: NodePort
       nodePort: 30030
 
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+
     # Pre-configure InfluxDB as a datasource so you can query tick prices
     additionalDataSources:
       - name: InfluxDB

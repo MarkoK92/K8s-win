@@ -1040,51 +1040,60 @@ git push
 
 ## Historical Data & Charts
 
-The Go ingester writes price history to local JSON files, enabling the UI to display live-updating charts.
+The Ticker API queries **InfluxDB** to provide historical data, enabling the UI to backfill charts on load.
 
 ### How It Works
-1. Each tick is appended to `data/{symbol}.json`
-2. Files are capped at **200 entries** (configurable via `maxHistory` in `main.go`)
-3. UI fetches history on page load and renders sparkline charts
-4. Live ticks are appended to charts in real-time
-
-### File Structure
-```
-data/
-├── BTC-USD.json   # [{"t": 1234567890, "p": 74250}, ...]
-├── ETH-USD.json
-└── SOL-USD.json
-```
+1. **Ingester**: Writes every tick to InfluxDB (bucket: `ticks`)
+2. **API**: `GET /api/history/{symbol}` queries InfluxDB (last 24h)
+3. **UI**: Fetches history on load, then switches to NATS for live updates
 
 ### Configuration
-```go
-// main.go
-maxHistory = 200   // Entries to keep per symbol (adjust as needed)
+InfluxDB settings are in `charts/influxdb/values.yaml` and `charts/ticker-app/values.yaml`. They must match (Org, Bucket, Token).
 
-// index.html (in configmaps.yaml)
-const MAX_POINTS = 50;  // Points to display on chart
-```
+---
+
+## Monitoring & Troubleshooting
+
+### Key Metrics to Watch
+
+We use **Grafana + Prometheus** to keep an eye on the cluster. Access Grafana at `http://localhost:30030` (admin/ticker).
+
+| Metric | Normal Range | Red Flag | Action |
+|--------|--------------|----------|--------|
+| **Pod Restarts** | 0 | > 0 | `kubectl logs` to find crash reason (OOM, panic) |
+| **CPU Usage** | < 500m (0.5 core) | > 90% limit | Increase limit in `values.yaml` or optimize code |
+| **Memory** | 50-200 MiB | > 256 MiB | Check for memory leaks; increase limit |
+| **PVC Storage** | < 1 GiB | > 80% capacity | Increase PVC size or reduce retention |
+
+### Troubleshooting
+
+#### 1. Grafana Not Loading
+- **Check pods:** `kubectl get pods -n monitoring` (Look for `monitoring-grafana`)
+- **Check service:** `kubectl get svc -n monitoring` (Ensure `NodePort` 30030 is listed)
+- **Check port-forward:** If running remotely/WSL, you might need `kubectl port-forward -n monitoring svc/monitoring-grafana 30030:80`
+
+#### 2. "No Data" in Dashboards
+- **Check Prometheus:** Is `monitoring-kube-prometheus-prometheus` pod running?
+- **Check ServiceMonitor:** Did you install the chart? Prometheus needs `ServiceMonitors` to know what to scrape.
+- **Check Time Range:** Ensure Grafana is looking at "Last 15 minutes", not "Last 24 hours" if you just started.
+
+#### 3. InfluxDB Connection Failed
+- **Check URL:** In `charts/monitoring/values.yaml`, the URL is `http://influxdb-service.default.svc.cluster.local:8086`. If you deployed InfluxDB to a different namespace, update this.
+- **Check Token:** The token in `values.yaml` must match the one in `charts/influxdb/values.yaml`.
 
 ---
 
 ## Production Alternatives
 
-For production deployments with millions of data points, consider replacing file-based storage with a time-series database:
+We chose InfluxDB for this project. Here is how it compares to other options:
 
-| Database | Type | Best For |
-|----------|------|----------|
-| **InfluxDB** | NoSQL | High write throughput, simple queries |
-| **TimescaleDB** | SQL (PostgreSQL) | Complex queries, existing SQL skills |
-| **QuestDB** | SQL | Extreme performance, columnar storage |
+### Decision Matrix
 
-### Migration Path
-1. Add a **db-writer service** that subscribes to NATS and writes to the database
-2. Add a **REST API** to query historical data
-3. Update UI to fetch from API instead of JSON files
+| Feature | InfluxDB (Current) | Redis (Add if...) | ClickHouse (Add if...) |
+|---------|--------------------|-------------------|------------------------|
+| **Retention** | 24 hours (auto) | RAM limit (LRU) | Years (manual TTL) |
+| **Speed** | Fast (ms) | Instant (µs) | Fast (for huge data) |
+| **Complexity**| Low (1 container)| Medium (+1 container)| High (cluster) |
+| **Use Case** | Recent history buffer | High-concurrency cache | Long-term analytics |
 
-```
-UDP → Ingester → NATS ─┬→ Browser (live via WebSocket)
-                       └→ DB Writer → TimescaleDB/InfluxDB
-                                            ↓
-                       Browser ←── REST API ←─┘
-```
+> **Rule of thumb:** Start with InfluxDB. Add Redis if you have 1000+ concurrent users reading history. Add ClickHouse if you need to analyze years of data.
