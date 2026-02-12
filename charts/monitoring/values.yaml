@@ -1,0 +1,78 @@
+# Monitoring Stack Configuration
+# This wraps kube-prometheus-stack with our custom settings
+
+kube-prometheus-stack:
+  # ── Grafana ──────────────────────────────────────────────
+  grafana:
+    enabled: true
+    adminUser: admin
+    adminPassword: ticker
+
+    service:
+      type: NodePort
+      nodePort: 30030
+
+    # Pre-configure InfluxDB as a datasource so you can query tick prices
+    additionalDataSources:
+      - name: InfluxDB
+        type: influxdb
+        access: proxy
+        url: http://influxdb-service.default.svc.cluster.local:8086
+        jsonData:
+          version: Flux
+          organization: ticker
+          defaultBucket: ticks
+        secureJsonData:
+          token: ticker-secret-token
+
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+
+  # ── Prometheus ───────────────────────────────────────────
+  prometheus:
+    prometheusSpec:
+      retention: 24h
+      scrapeInterval: 15s
+
+      resources:
+        requests:
+          cpu: "200m"
+          memory: "512Mi"
+        limits:
+          cpu: "1000m"
+          memory: "1Gi"
+
+      # Minimal storage for single-node k3s
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 2Gi
+
+  # ── Disable heavy components not needed for single-node ──
+  alertmanager:
+    enabled: false
+
+  # Node exporter for hardware metrics (CPU, RAM, disk)
+  nodeExporter:
+    enabled: true
+
+  kubeStateMetrics:
+    enabled: true
+
+  # Disable components that don't work well on k3s
+  kubeEtcd:
+    enabled: false
+  kubeControllerManager:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+  kubeProxy:
+    enabled: false

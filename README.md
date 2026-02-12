@@ -5,22 +5,43 @@ A real-time price ticker running on Kubernetes with NATS messaging and **Protoco
 ## Architecture
 
 ```
-                    ┌───────────────────────────────────────────────────────────┐
-                    │                   Kubernetes Cluster                      │
-                    │                                                           │
- UDP :5005          │  ┌───────────┐ publish  ┌──────┐                          │
-────────────────────►  │ Ingester  │────────► │ NATS │──► WebSocket (live)      │
-                    │  │   (Go)    │          └──────┘                          │
-                    │  │           │                                            │
-                    │  │           │──write──► ┌──────────┐                     │
-                    │  └───────────┘           │ InfluxDB │ ← 24h retention     │
-                    │                          └────┬─────┘                     │
-                    │                               │ query                     │
-                    │  ┌───────────┐           ┌────┴─────┐                     │
- HTTP :80           │  │  nginx    │           │ API (Go) │ ← /api/history      │
-◄───────────────────│  │  (UI)     │           └──────────┘                     │
-                    │  └───────────┘                                            │
-                    └───────────────────────────────────────────────────────────┘
+                          ┌──────────────────────────────────────────────────────────────┐
+                          │                     Kubernetes Cluster                       │
+                          │                                                              │
+                          │  ┌───────────┐   nats-service        ┌───────────────┐       │
+ ticker-ingester-service  │  │ Ingester  │──────────────────────►│     NATS      │       │
+──────UDP :30005─────────►│  │   (Go)    │   ClusterIP :4222     │  (nats:latest)│       │
+                          │  │           │   TCP / publish       └─────|─────────┘       │
+                          │  │           │                             │                 │
+                          │  │           │   influxdb-service          │ nats-gateway-   │
+                          │  │           │──────────────────┐          │ service         │
+                          │  └───────────┘   ClusterIP :8086│          │ NodePort :30080 │
+                          │                  HTTP / write   │          │ WebSocket       │
+                          │                          ┌──────▼──────┐   │                 │
+                          │                          │  InfluxDB   │   │                 │
+                          │                          │ (influxdb:  │   │                 │
+                          │                          │  2.7-alpine)│   │                 │
+                          │                          └──────┬──────┘   │                 │
+                          │                                 │          │                 │
+                          │          influxdb-service       │          │                 │
+                          │          ClusterIP :8086        │          │                 │
+                          │          HTTP / query           │          │                 │
+                          │                          ┌──────┘          │                 │
+                          │  ┌───────────┐   ┌───────▼──────┐          │                 │
+ ticker-ui-service        │  │   nginx   │   │   API (Go)   │          │                 │
+◄─────HTTP :30007─────────│  │   (UI)    │   │  :8090       │          │                 │
+                          │  └───────────┘   └──────────────┘          │                 │
+                          │                  ticker-api-service        │                 │
+                          │                  NodePort :30090           │                 │
+                          └──────────────────────────────────────────────────────────────┘
+                                                     │                 │
+                                             ┌───────▼─────────────────▼───────┐
+                                             │           Browser               │
+                                             │                                 │
+                                             │  1. GET ticker-ui:80 (HTML)     │
+                                             │  2. WS  nats-gw:8080 (live)     │
+                                             │  3. GET api:8090 (history)      │
+                                             └─────────────────────────────────┘
 ```
 
 Browser flow:
@@ -74,6 +95,7 @@ The browser does **not** get data through the UI service — it connects directl
 | **Ticker API** | Go | HTTP API querying InfluxDB for historical data |
 | **UI (nginx)** | `nginx:alpine` | Serves the HTML ticker page |
 | **Browser** | JavaScript + Chart.js | Decodes Protobuf, displays live prices with charts |
+| **Monitoring** | Prometheus + Grafana | Cluster metrics and price dashboards |
 
 ## Files
 
@@ -86,7 +108,7 @@ The browser does **not** get data through the UI service — it connects directl
 | `configmaps.yaml` | UI HTML code + NATS server config |
 | `deployments.yaml` | NATS and ticker-app deployments |
 | `services.yaml` | All services (internal + external) |
-| `charts/` | Helm charts (nats + ticker-app + influxdb) |
+| `charts/` | Helm charts (nats, ticker-app, influxdb, monitoring) |
 | `argocd/` | Argo CD Application manifests (GitOps) |
 
 ---
@@ -252,7 +274,7 @@ $bytes = [Text.Encoding]::ASCII.GetBytes("BTC-USD,74250.65")
 $udp.Send($bytes, $bytes.Length, "127.0.0.1", 5005)
 ```
 
-### Windows (PowerShell) - Multi-Pair (BTC, ETH, SOL)
+### Windows (PowerShell) - Multi-Pair (BTC, ETH, SOL, DOGE, ADA)
 ```powershell
 $udp = New-Object System.Net.Sockets.UdpClient
 while($true) { 
@@ -271,6 +293,16 @@ while($true) {
     $bytes = [Text.Encoding]::ASCII.GetBytes("SOL-USD,$sol")
     $udp.Send($bytes, $bytes.Length, "127.0.0.1", 5005)
     
+    # DOGE-USD
+    $doge = [math]::Round(0.15 + (Get-Random -Maximum 5) / 100, 4)
+    $bytes = [Text.Encoding]::ASCII.GetBytes("DOGE-USD,$doge")
+    $udp.Send($bytes, $bytes.Length, "127.0.0.1", 5005)
+    
+    # ADA-USD
+    $ada = [math]::Round(0.45 + (Get-Random -Maximum 10) / 100, 4)
+    $bytes = [Text.Encoding]::ASCII.GetBytes("ADA-USD,$ada")
+    $udp.Send($bytes, $bytes.Length, "127.0.0.1", 5005)
+    
     Start-Sleep -Milliseconds 500
 }
 ```
@@ -281,10 +313,14 @@ while true; do
     BTC=$((74000 + RANDOM % 500))
     ETH=$((2800 + RANDOM % 100))
     SOL=$((180 + RANDOM % 20))
+    DOGE=$(awk "BEGIN{printf \"%.4f\", 0.15 + (RANDOM % 5) / 100}")
+    ADA=$(awk "BEGIN{printf \"%.4f\", 0.45 + (RANDOM % 10) / 100}")
     
     echo "BTC-USD,$BTC" | nc -u -w0 127.0.0.1 5005
     echo "ETH-USD,$ETH" | nc -u -w0 127.0.0.1 5005
     echo "SOL-USD,$SOL" | nc -u -w0 127.0.0.1 5005
+    echo "DOGE-USD,$DOGE" | nc -u -w0 127.0.0.1 5005
+    echo "ADA-USD,$ADA" | nc -u -w0 127.0.0.1 5005
     
     sleep 0.5
 done
@@ -683,6 +719,42 @@ for (const pt of history.slice(-50)) {
 ```bash
 kubectl port-forward svc/ticker-api-service 30090:8090
 ```
+
+## Monitoring (Grafana + Prometheus)
+
+We use the **kube-prometheus-stack** to provide full cluster monitoring and dashboards.
+
+### Accessing Grafana
+
+- **URL:** `http://localhost:30030`
+- **Username:** `admin`
+- **Password:** `ticker`
+
+### Architecture
+
+```
+           ┌──────────────┐
+           │  Prometheus  │
+           │  (Metrics)   │
+           └──────┬───────┘
+                  │ scrapes (via ServiceMonitor)
+           ┌──────▼───────┐
+           │  Kubernetes  │
+           │ Pods & Nodes │
+           └──────────────┘
+
+           ┌──────────────┐      reads       ┌──────────────┐
+           │   Grafana    │◄─────────────────┤   InfluxDB   │
+           │ (Dashboards) │      history     │ (Tick Data)  │
+           └──────┬───────┘                  └──────────────┘
+                  │
+            NodePort :30030
+```
+
+### Dashboards
+
+1. **Kubernetes / Compute Resources / Namespace (Pods):** CPU/Memory usage of the ingester, API, and NATS.
+2. **InfluxDB Data:** You can create a new dashboard, select **InfluxDB** as the datasource, and query the `ticks` bucket to visualize price history alongside infrastructure metrics.
 
 ---
 

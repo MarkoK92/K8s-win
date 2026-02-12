@@ -1,0 +1,24 @@
+# Argo CD Application for Monitoring chart (Grafana + Prometheus)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/MarkoK92/K8s-win.git
+    targetRevision: main
+    path: charts/monitoring
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
