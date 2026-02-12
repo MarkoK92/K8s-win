@@ -12,7 +12,7 @@
             "title": "Cluster CPU Usage",
             "type": "timeseries",
             "gridPos": {
-                "h": 8,
+                "h": 7,
                 "w": 12,
                 "x": 0,
                 "y": 0
@@ -35,7 +35,7 @@
             "title": "Cluster Memory Usage",
             "type": "timeseries",
             "gridPos": {
-                "h": 8,
+                "h": 7,
                 "w": 12,
                 "x": 12,
                 "y": 0
@@ -55,24 +55,67 @@
             }
         },
         {
-            "title": "Pod Restarts (All Namespaces)",
-            "type": "stat",
+            "title": "Running Pods & Resources",
+            "type": "table",
             "gridPos": {
-                "h": 8,
-                "w": 12,
+                "h": 10,
+                "w": 24,
                 "x": 0,
-                "y": 8
+                "y": 7
             },
             "targets": [
                 {
-                    "expr": "increase(kube_pod_container_status_restarts_total[1h]) > 0",
-                    "legendFormat": "{{pod}} ({{namespace}})"
+                    "expr": "sum by (pod, namespace) (rate(container_cpu_usage_seconds_total{image!=\"\"}[5m]))",
+                    "format": "table",
+                    "legendFormat": "CPU Cores"
+                },
+                {
+                    "expr": "sum by (pod, namespace) (container_memory_usage_bytes{image!=\"\"})",
+                    "format": "table",
+                    "legendFormat": "RAM Usage"
+                },
+                {
+                    "expr": "sum by (pod, namespace) (kube_pod_status_ready{condition=\"true\"})",
+                    "format": "table",
+                    "legendFormat": "Ready"
+                },
+                {
+                    "expr": "sum by (pod, namespace) (kube_pod_container_status_restarts_total)",
+                    "format": "table",
+                    "legendFormat": "Restarts"
+                },
+                {
+                    "expr": "sum by (pod, namespace) (rate(container_network_receive_bytes_total[5m]))",
+                    "format": "table",
+                    "legendFormat": "Net RX/s"
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "merge",
+                    "options": {}
+                },
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": {
+                            "Time": true
+                        },
+                        "renameByName": {
+                            "Value #A": "CPU Cores",
+                            "Value #B": "RAM",
+                            "Value #C": "Ready",
+                            "Value #D": "Restarts",
+                            "Value #E": "Net RX/s"
+                        }
+                    }
                 }
             ],
             "fieldConfig": {
                 "defaults": {
-                    "color": {
-                        "mode": "thresholds"
+                    "custom": {
+                        "displayMode": "auto",
+                        "align": "auto"
                     },
                     "thresholds": {
                         "mode": "absolute",
@@ -80,45 +123,125 @@
                             {
                                 "color": "green",
                                 "value": null
-                            },
-                            {
-                                "color": "red",
-                                "value": 1
                             }
                         ]
                     }
-                }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "RAM"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "bytes"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Net RX/s"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "Bps"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Restarts"
+                        },
+                        "properties": [
+                            {
+                                "id": "thresholds",
+                                "value": {
+                                    "mode": "absolute",
+                                    "steps": [
+                                        {
+                                            "color": "green",
+                                            "value": 0
+                                        },
+                                        {
+                                            "color": "red",
+                                            "value": 1
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Ready"
+                        },
+                        "properties": [
+                            {
+                                "id": "mappings",
+                                "value": [
+                                    {
+                                        "type": "value",
+                                        "options": {
+                                            "0": {
+                                                "text": "Not Ready",
+                                                "color": "red"
+                                            },
+                                            "1": {
+                                                "text": "Running",
+                                                "color": "green"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
             }
         },
         {
-            "title": "App Memory (Default NS)",
-            "type": "timeseries",
+            "title": "Services & Ports",
+            "type": "table",
             "gridPos": {
-                "h": 8,
+                "h": 7,
                 "w": 12,
-                "x": 12,
-                "y": 8
+                "x": 0,
+                "y": 17
             },
             "targets": [
                 {
-                    "expr": "sum(container_memory_usage_bytes{namespace=\"default\", container!=\"\"}) by (pod)",
-                    "legendFormat": "{{pod}}"
+                    "expr": "kube_service_info",
+                    "format": "table",
+                    "instant": true
                 }
             ],
-            "fieldConfig": {
-                "defaults": {
-                    "unit": "bytes"
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": {
+                            "Time": true,
+                            "Value": true
+                        },
+                        "renameByName": {}
+                    }
                 }
-            }
+            ]
         },
         {
             "title": "PVC Storage Usage",
             "type": "table",
             "gridPos": {
-                "h": 8,
-                "w": 24,
-                "x": 0,
-                "y": 16
+                "h": 7,
+                "w": 12,
+                "x": 12,
+                "y": 17
             },
             "targets": [
                 {
@@ -141,7 +264,7 @@
                             },
                             {
                                 "color": "orange",
-                                "value": 80
+                                "value": 70
                             },
                             {
                                 "color": "red",
@@ -154,12 +277,38 @@
                     }
                 }
             }
+        },
+        {
+            "title": "Network Traffic (Bytes/sec)",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 7,
+                "w": 24,
+                "x": 0,
+                "y": 24
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"default\"}[1m])) by (pod)",
+                    "legendFormat": "RX {{pod}}"
+                },
+                {
+                    "expr": "sum(rate(container_network_transmit_bytes_total{namespace=\"default\"}[1m])) by (pod)",
+                    "legendFormat": "TX {{pod}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "Bps"
+                }
+            }
         }
     ],
     "schemaVersion": 36,
     "style": "dark",
     "tags": [
-        "simple"
+        "simple",
+        "detailed"
     ],
     "templating": {
         "list": []
@@ -170,8 +319,8 @@
     },
     "timepicker": {},
     "timezone": "",
-    "title": "Simple Metrics",
+    "title": "Simple Metrics (Detailed)",
     "uid": "simple-metrics",
-    "version": 2,
+    "version": 3,
     "weekStart": ""
 }
