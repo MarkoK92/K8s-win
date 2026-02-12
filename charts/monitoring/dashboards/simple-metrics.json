@@ -27,7 +27,7 @@
             "type": "timeseries",
             "gridPos": {
                 "h": 7,
-                "w": 12,
+                "w": 24,
                 "x": 0,
                 "y": 6
             },
@@ -50,9 +50,9 @@
             "type": "timeseries",
             "gridPos": {
                 "h": 7,
-                "w": 12,
-                "x": 12,
-                "y": 6
+                "w": 24,
+                "x": 0,
+                "y": 13
             },
             "targets": [
                 {
@@ -69,131 +69,13 @@
             }
         },
         {
-            "title": "Running Pods (Resources & Network)",
-            "type": "table",
-            "gridPos": {
-                "h": 10,
-                "w": 24,
-                "x": 0,
-                "y": 13
-            },
-            "targets": [
-                {
-                    "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total[1m]))",
-                    "format": "table",
-                    "legendFormat": "CPU Cores"
-                },
-                {
-                    "expr": "sum by (pod) (container_memory_usage_bytes)",
-                    "format": "table",
-                    "legendFormat": "RAM Usage"
-                },
-                {
-                    "expr": "sum by (pod) (kube_pod_container_status_restarts_total)",
-                    "format": "table",
-                    "legendFormat": "Restarts"
-                },
-                {
-                    "expr": "sum by (pod) (rate(container_network_receive_bytes_total{namespace=\"default\"}[1m]))",
-                    "format": "table",
-                    "legendFormat": "Net RX/s"
-                }
-            ],
-            "transformations": [
-                {
-                    "id": "merge",
-                    "options": {}
-                },
-                {
-                    "id": "organize",
-                    "options": {
-                        "excludeByName": {
-                            "Time": true
-                        },
-                        "renameByName": {
-                            "Value #A": "CPU",
-                            "Value #B": "RAM",
-                            "Value #C": "Restarts",
-                            "Value #D": "RX/s"
-                        }
-                    }
-                },
-                {
-                    "id": "filterByName",
-                    "options": {
-                        "exclude": {
-                            "Value": true
-                        }
-                    }
-                }
-            ],
-            "fieldConfig": {
-                "defaults": {
-                    "custom": {
-                        "displayMode": "auto",
-                        "align": "auto"
-                    }
-                },
-                "overrides": [
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "RAM"
-                        },
-                        "properties": [
-                            {
-                                "id": "unit",
-                                "value": "bytes"
-                            }
-                        ]
-                    },
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "RX/s"
-                        },
-                        "properties": [
-                            {
-                                "id": "unit",
-                                "value": "Bps"
-                            }
-                        ]
-                    },
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "Restarts"
-                        },
-                        "properties": [
-                            {
-                                "id": "thresholds",
-                                "value": {
-                                    "mode": "absolute",
-                                    "steps": [
-                                        {
-                                            "color": "green",
-                                            "value": 0
-                                        },
-                                        {
-                                            "color": "red",
-                                            "value": 1
-                                        }
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                ]
-            }
-        },
-        {
             "title": "CPU Usage per Pod",
             "type": "timeseries",
             "gridPos": {
                 "h": 7,
-                "w": 8,
+                "w": 24,
                 "x": 0,
-                "y": 23
+                "y": 20
             },
             "targets": [
                 {
@@ -212,9 +94,9 @@
             "type": "timeseries",
             "gridPos": {
                 "h": 7,
-                "w": 8,
-                "x": 8,
-                "y": 23
+                "w": 24,
+                "x": 0,
+                "y": 27
             },
             "targets": [
                 {
@@ -233,13 +115,13 @@
             "type": "timeseries",
             "gridPos": {
                 "h": 7,
-                "w": 8,
-                "x": 16,
-                "y": 23
+                "w": 24,
+                "x": 0,
+                "y": 34
             },
             "targets": [
                 {
-                    "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"default\"}[1m])) by (pod)",
+                    "expr": "sum(rate(process_network_receive_bytes_total[1m])) by (pod)",
                     "legendFormat": "{{pod}}"
                 }
             ],
@@ -250,7 +132,7 @@
             }
         },
         {
-            "title": "Market Data: Total Ticks (Flux)",
+            "title": "Market Data: Total Count",
             "type": "stat",
             "datasource": {
                 "type": "influxdb",
@@ -260,11 +142,11 @@
                 "h": 6,
                 "w": 8,
                 "x": 0,
-                "y": 30
+                "y": 41
             },
             "targets": [
                 {
-                    "query": "from(bucket: \"ticks\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\") |> filter(fn: (r) => r[\"_field\"] == \"price\") |> count()",
+                    "query": "from(bucket: \"ticks\") |> range(start: -24h) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\" and r[\"_field\"] == \"price\") |> count()",
                     "refId": "A"
                 }
             ],
@@ -273,42 +155,70 @@
                     "unit": "short",
                     "color": {
                         "mode": "continuous-GrYlRd"
-                    }
+                    },
+                    "displayName": "${__field.labels.symbol}"
                 }
             }
         },
         {
-            "title": "Market Data: Freshness (Last Seen)",
-            "type": "table",
+            "title": "Market Data: First Timestamp",
+            "type": "stat",
             "datasource": {
                 "type": "influxdb",
                 "uid": "InfluxDB"
             },
             "gridPos": {
                 "h": 6,
-                "w": 16,
+                "w": 8,
                 "x": 8,
-                "y": 30
+                "y": 41
             },
             "targets": [
                 {
-                    "query": "from(bucket: \"ticks\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\") |> filter(fn: (r) => r[\"_field\"] == \"price\") |> group(columns: [\"symbol\"]) |> last() |> keep(columns: [\"symbol\", \"_time\", \"_value\"])",
-                    "refId": "A",
-                    "resultFormat": "table"
+                    "query": "from(bucket: \"ticks\") |> range(start: -24h) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\" and r[\"_field\"] == \"price\") |> first() |> map(fn: (r) => ({ _value: time(v: r._time), symbol: r.symbol }))",
+                    "refId": "A"
                 }
             ],
-            "transformations": [
-                {
-                    "id": "organize",
-                    "options": {
-                        "excludeByName": {},
-                        "renameByName": {
-                            "_time": "Last Seen",
-                            "_value": "Last Price"
-                        }
-                    }
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "dateTimeAsIso",
+                    "color": {
+                        "mode": "fixed",
+                        "fixedColor": "blue"
+                    },
+                    "displayName": "${__field.labels.symbol}"
                 }
-            ]
+            }
+        },
+        {
+            "title": "Market Data: Last Timestamp",
+            "type": "stat",
+            "datasource": {
+                "type": "influxdb",
+                "uid": "InfluxDB"
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 8,
+                "x": 16,
+                "y": 41
+            },
+            "targets": [
+                {
+                    "query": "from(bucket: \"ticks\") |> range(start: -24h) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\" and r[\"_field\"] == \"price\") |> last() |> map(fn: (r) => ({ _value: time(v: r._time), symbol: r.symbol }))",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "dateTimeAsIso",
+                    "color": {
+                        "mode": "fixed",
+                        "fixedColor": "green"
+                    },
+                    "displayName": "${__field.labels.symbol}"
+                }
+            }
         },
         {
             "title": "PVC Storage Usage",
@@ -317,7 +227,7 @@
                 "h": 6,
                 "w": 24,
                 "x": 0,
-                "y": 36
+                "y": 47
             },
             "targets": [
                 {
@@ -353,23 +263,6 @@
                     }
                 }
             }
-        },
-        {
-            "title": "DEBUG: All Container Metrics",
-            "type": "table",
-            "gridPos": {
-                "h": 6,
-                "w": 24,
-                "x": 0,
-                "y": 42
-            },
-            "targets": [
-                {
-                    "expr": "count({__name__=~\"container_.*\"}) by (__name__)",
-                    "format": "table"
-                }
-            ],
-            "title": "DEBUG - List of available container metrics"
         }
     ],
     "schemaVersion": 36,
