@@ -9,7 +9,7 @@
     "links": [],
     "panels": [
         {
-            "title": "Access Points (Port-Forward Reference)",
+            "title": "Access Points",
             "type": "text",
             "gridPos": {
                 "h": 6,
@@ -19,7 +19,7 @@
             },
             "options": {
                 "mode": "markdown",
-                "content": "| Service | Local URL | User/Pass |\n|---|---|---|\n| **Grafana** | [http://localhost:30030](http://localhost:30030) | `admin` / `ticker` |\n| **Argo CD** | [https://localhost:8443](https://localhost:8443) | `admin` / *(check secret)* |\n| **Ticker UI** | [http://localhost:8080](http://localhost:8080) | - |\n| **Ticker API** | [http://localhost:30090/api/history/BTC-USD](http://localhost:30090/api/history/BTC-USD) | - |\n| **InfluxDB** | [http://localhost:8086](http://localhost:8086) | `admin` / `tickerpass123` |"
+                "content": "| Service | Cluster URL | User/Pass |\n|---|---|---|\n| **Grafana** | [http://grafana:30030](http://localhost:30030) | `admin` / `ticker` |\n| **Argo CD** | [https://argocd:8443](https://localhost:8443) | `admin` / *(check secret)* |\n| **Ticker UI** | [http://ticker-ui:8080](http://localhost:8080) | - |\n| **Ticker API** | [http://ticker-api:30090](http://localhost:30090/api/history/BTC-USD) | - |\n| **InfluxDB** | [http://influxdb:8086](http://localhost:8086) | `admin` / `tickerpass123` |"
             }
         },
         {
@@ -79,22 +79,22 @@
             },
             "targets": [
                 {
-                    "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{image!=\"\", container!=\"POD\"}[5m])) * (on(pod) group_left(phase) kube_pod_status_phase{phase=\"Running\"})",
+                    "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{image!=\"\", container!=\"POD\"}[5m]))",
                     "format": "table",
                     "legendFormat": "CPU Cores"
                 },
                 {
-                    "expr": "sum by (pod) (container_memory_usage_bytes{image!=\"\", container!=\"POD\"}) * (on(pod) group_left(phase) kube_pod_status_phase{phase=\"Running\"})",
+                    "expr": "sum by (pod) (container_memory_usage_bytes{image!=\"\", container!=\"POD\"})",
                     "format": "table",
                     "legendFormat": "RAM Usage"
                 },
                 {
-                    "expr": "sum by (pod) (kube_pod_container_status_restarts_total) * (on(pod) group_left(phase) kube_pod_status_phase{phase=\"Running\"})",
+                    "expr": "sum by (pod) (kube_pod_container_status_restarts_total)",
                     "format": "table",
                     "legendFormat": "Restarts"
                 },
                 {
-                    "expr": "sum by (pod) (rate(container_network_receive_bytes_total{namespace=\"default\"}[5m])) * (on(pod) group_left(phase) kube_pod_status_phase{phase=\"Running\"})",
+                    "expr": "sum by (pod) (rate(container_network_receive_bytes_total{namespace=\"default\"}[5m]))",
                     "format": "table",
                     "legendFormat": "Net RX/s"
                 }
@@ -122,7 +122,6 @@
                     "id": "filterByName",
                     "options": {
                         "exclude": {
-                            "phase": true,
                             "Value": true
                         }
                     }
@@ -198,7 +197,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(container_cpu_usage_seconds_total{image!=\"\", container!=\"POD\"}[1m])) by (pod) * on(pod) group_left(phase) kube_pod_status_phase{phase=\"Running\"}",
+                    "expr": "sum(rate(container_cpu_usage_seconds_total{image!=\"\", container!=\"POD\"}[1m])) by (pod)",
                     "legendFormat": "{{pod}}"
                 }
             ],
@@ -219,7 +218,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(container_memory_usage_bytes{image!=\"\", container!=\"POD\"}) by (pod) * on(pod) group_left(phase) kube_pod_status_phase{phase=\"Running\"}",
+                    "expr": "sum(container_memory_usage_bytes{image!=\"\", container!=\"POD\"}) by (pod)",
                     "legendFormat": "{{pod}}"
                 }
             ],
@@ -240,7 +239,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"default\"}[1m])) by (pod) * on(pod) group_left(phase) kube_pod_status_phase{phase=\"Running\"}",
+                    "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"default\"}[1m])) by (pod)",
                     "legendFormat": "{{pod}}"
                 }
             ],
@@ -251,7 +250,7 @@
             }
         },
         {
-            "title": "Market Data: Total Ticks Recorded",
+            "title": "Market Data: Total Ticks (Flux)",
             "type": "stat",
             "datasource": {
                 "type": "influxdb",
@@ -265,11 +264,8 @@
             },
             "targets": [
                 {
-                    "query": "SELECT count(\"p\") FROM \"ticks\" WHERE $timeFilter GROUP BY \"symbol\"",
-                    "orderByTime": "ASC",
-                    "policy": "default",
-                    "refId": "A",
-                    "resultFormat": "time_series"
+                    "query": "from(bucket: \"ticks\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\") |> filter(fn: (r) => r[\"_field\"] == \"p\") |> count()",
+                    "refId": "A"
                 }
             ],
             "fieldConfig": {
@@ -282,7 +278,7 @@
             }
         },
         {
-            "title": "Market Data: Freshness (Min/Max Date)",
+            "title": "Market Data: Freshness (Last Seen)",
             "type": "table",
             "datasource": {
                 "type": "influxdb",
@@ -296,9 +292,7 @@
             },
             "targets": [
                 {
-                    "query": "SELECT first(\"p\"), last(\"p\") FROM \"ticks\" WHERE $timeFilter GROUP BY \"symbol\"",
-                    "orderByTime": "ASC",
-                    "policy": "default",
+                    "query": "from(bucket: \"ticks\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\") |> filter(fn: (r) => r[\"_field\"] == \"p\") |> group(columns: [\"symbol\"]) |> last() |> keep(columns: [\"symbol\", \"_time\", \"_value\"])",
                     "refId": "A",
                     "resultFormat": "table"
                 }
@@ -307,12 +301,10 @@
                 {
                     "id": "organize",
                     "options": {
-                        "excludeByName": {
-                            "Time": true
-                        },
+                        "excludeByName": {},
                         "renameByName": {
-                            "first": "Oldest Tick",
-                            "last": "Newest Tick"
+                            "_time": "Last Seen",
+                            "_value": "Last Price"
                         }
                     }
                 }
@@ -368,19 +360,20 @@
     "tags": [
         "simple",
         "detailed",
-        "influxdb"
+        "influxdb",
+        "flux"
     ],
     "templating": {
         "list": []
     },
     "time": {
-        "from": "now-6h",
+        "from": "now-1h",
         "to": "now"
     },
     "timepicker": {},
     "timezone": "",
-    "title": "Simple Metrics + Market Data",
+    "title": "Simple Metrics (Flux)",
     "uid": "simple-metrics",
-    "version": 5,
+    "version": 6,
     "weekStart": ""
 }
