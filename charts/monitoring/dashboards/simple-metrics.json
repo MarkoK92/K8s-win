@@ -27,7 +27,7 @@
             "type": "timeseries",
             "gridPos": {
                 "h": 7,
-                "w": 24,
+                "w": 12,
                 "x": 0,
                 "y": 6
             },
@@ -50,9 +50,9 @@
             "type": "timeseries",
             "gridPos": {
                 "h": 7,
-                "w": 24,
-                "x": 0,
-                "y": 13
+                "w": 12,
+                "x": 12,
+                "y": 6
             },
             "targets": [
                 {
@@ -73,9 +73,9 @@
             "type": "timeseries",
             "gridPos": {
                 "h": 7,
-                "w": 24,
+                "w": 12,
                 "x": 0,
-                "y": 20
+                "y": 13
             },
             "targets": [
                 {
@@ -94,9 +94,9 @@
             "type": "timeseries",
             "gridPos": {
                 "h": 7,
-                "w": 24,
-                "x": 0,
-                "y": 27
+                "w": 12,
+                "x": 12,
+                "y": 13
             },
             "targets": [
                 {
@@ -115,9 +115,9 @@
             "type": "timeseries",
             "gridPos": {
                 "h": 7,
-                "w": 24,
+                "w": 12,
                 "x": 0,
-                "y": 34
+                "y": 20
             },
             "targets": [
                 {
@@ -132,6 +132,47 @@
             }
         },
         {
+            "title": "Database Size",
+            "type": "stat",
+            "gridPos": {
+                "h": 7,
+                "w": 12,
+                "x": 12,
+                "y": 20
+            },
+            "targets": [
+                {
+                    "expr": "sum(kubelet_volume_stats_used_bytes{persistentvolumeclaim=\"influxdb-data\", namespace=\"default\"}) or sum(container_fs_usage_bytes{namespace=\"default\", pod=~\".*influx.*\"})",
+                    "legendFormat": "InfluxDB Database"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes",
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "orange",
+                                "value": 1000000000
+                            },
+                            {
+                                "color": "red",
+                                "value": 5000000000
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
             "title": "Market Data: Total Count",
             "type": "stat",
             "datasource": {
@@ -142,7 +183,7 @@
                 "h": 6,
                 "w": 8,
                 "x": 0,
-                "y": 41
+                "y": 27
             },
             "targets": [
                 {
@@ -158,6 +199,13 @@
                     },
                     "displayName": "${__field.labels.symbol}"
                 }
+            },
+            "options": {
+                "orientation": "horizontal",
+                "textMode": "auto",
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto"
             }
         },
         {
@@ -171,11 +219,11 @@
                 "h": 6,
                 "w": 8,
                 "x": 8,
-                "y": 41
+                "y": 27
             },
             "targets": [
                 {
-                    "query": "from(bucket: \"ticks\") |> range(start: -24h) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\" and r[\"_field\"] == \"price\") |> first() |> map(fn: (r) => ({ _value: time(v: r._time), symbol: r.symbol }))",
+                    "query": "from(bucket: \"ticks\") |> range(start: -24h) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\" and r[\"_field\"] == \"price\") |> first() |> map(fn: (r) => ({ _value: uint(v: r._time) / uint(v: 1000000), symbol: r.symbol }))",
                     "refId": "A"
                 }
             ],
@@ -188,6 +236,13 @@
                     },
                     "displayName": "${__field.labels.symbol}"
                 }
+            },
+            "options": {
+                "orientation": "horizontal",
+                "textMode": "auto",
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto"
             }
         },
         {
@@ -201,11 +256,11 @@
                 "h": 6,
                 "w": 8,
                 "x": 16,
-                "y": 41
+                "y": 27
             },
             "targets": [
                 {
-                    "query": "from(bucket: \"ticks\") |> range(start: -24h) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\" and r[\"_field\"] == \"price\") |> last() |> map(fn: (r) => ({ _value: time(v: r._time), symbol: r.symbol }))",
+                    "query": "from(bucket: \"ticks\") |> range(start: -24h) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\" and r[\"_field\"] == \"price\") |> last() |> map(fn: (r) => ({ _value: uint(v: r._time) / uint(v: 1000000), symbol: r.symbol }))",
                     "refId": "A"
                 }
             ],
@@ -218,50 +273,13 @@
                     },
                     "displayName": "${__field.labels.symbol}"
                 }
-            }
-        },
-        {
-            "title": "PVC Storage Usage",
-            "type": "table",
-            "gridPos": {
-                "h": 6,
-                "w": 24,
-                "x": 0,
-                "y": 47
             },
-            "targets": [
-                {
-                    "expr": "kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes * 100",
-                    "legendFormat": "{{persistentvolumeclaim}}"
-                }
-            ],
-            "fieldConfig": {
-                "defaults": {
-                    "unit": "percent",
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            },
-                            {
-                                "color": "orange",
-                                "value": 70
-                            },
-                            {
-                                "color": "red",
-                                "value": 90
-                            }
-                        ]
-                    },
-                    "custom": {
-                        "displayMode": "color-background"
-                    }
-                }
+            "options": {
+                "orientation": "horizontal",
+                "textMode": "auto",
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto"
             }
         }
     ],
