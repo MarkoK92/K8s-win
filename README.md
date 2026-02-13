@@ -108,8 +108,11 @@ The browser does **not** get data through the UI service — it connects directl
 | `configmaps.yaml` | UI HTML code + NATS server config |
 | `deployments.yaml` | NATS and ticker-app deployments |
 | `services.yaml` | All services (internal + external) |
-| `charts/` | Helm charts (nats, ticker-app, influxdb, monitoring) |
-| `argocd/` | Argo CD Application manifests (GitOps) |
+| `charts/nats/` | Helm chart — NATS messaging server |
+| `charts/ticker-app/` | Helm chart — UI, ingester, API |
+| `charts/influxdb/` | Helm chart — InfluxDB time-series database |
+| `charts/monitoring/` | Helm chart — Grafana + Prometheus + custom dashboards |
+| `argocd/` | Argo CD Application manifests (nats, ticker, influxdb, monitoring) |
 
 ---
 
@@ -236,30 +239,46 @@ If it compiles without errors, protobuf is set up correctly!
 
 ## Running (Local Development Mode)
 
-You need **5 terminals** when running the Go ingester locally:
+You need **7 terminals** when running the full stack locally:
 
-### Terminal 1: Port Forward UI
-```bash
-kubectl port-forward svc/ticker-ui-service 8080:80
-```
-
-### Terminal 2: Port Forward NATS WebSocket
+### Terminal 1: Port Forward Ticker UI
 ```bash
 kubectl port-forward svc/nats-gateway-service 30080:8080
 ```
 
-### Terminal 3: Port Forward NATS (for local Go ingester)
+### Terminal 2: Port Forward NATS TCP (for local Go ingester)
 ```bash
 kubectl port-forward svc/nats-service 4222:4222
 ```
 
-### Terminal 4: Run Go Ingester
+### Terminal 3: Port Forward Ticker API (history endpoint)
+```bash
+kubectl port-forward svc/ticker-api-service 30090:8090
+```
+
+### Terminal 4: Port Forward InfluxDB (local access / debugging)
+```bash
+kubectl port-forward svc/influxdb-service 8086:8086
+```
+
+### Terminal 5: Port Forward Argo CD (GitOps UI)
+```bash
+kubectl port-forward svc/argocd-server -n argocd 8443:443
+```
+
+### Terminal 6: Run Go Ingester
 ```bash
 go run main.go
 ```
 
-### Terminal 5: Open Browser
-Open http://localhost:8080 in your browser
+### Terminal 7: Open Browser
+Open the following URLs:
+- **Ticker UI:** http://localhost:8080
+- **Grafana:** http://localhost:30030
+- **Argo CD:** https://localhost:8443
+- **InfluxDB:** http://localhost:8086
+
+> **Note:** Grafana is accessible directly via NodePort 30030 without a port-forward. The other services require the port-forwards above.
 
 ---
 
@@ -411,6 +430,10 @@ This matters when sending millions of price updates per second!
 | `nats-gateway-service` | NodePort | 30080→8080 | Browser WebSocket |
 | `ticker-ui-service` | NodePort | 30007→80 | Browser HTTP (UI) |
 | `ticker-ingester-service` | NodePort | 30005→5005 | UDP ingestion |
+| `ticker-api-service` | NodePort | 30090→8090 | History API (InfluxDB queries) |
+| `influxdb-service` | ClusterIP | 8086 | InfluxDB HTTP API |
+| `monitoring-grafana` | NodePort | 30030→80 | Grafana dashboards |
+| `monitoring-kube-prometheus-prometheus` | ClusterIP | 9090 | Prometheus metrics |
 
 ---
 
@@ -457,9 +480,14 @@ charts/
 │   ├── Chart.yaml
 │   ├── values.yaml
 │   └── templates/
-└── influxdb/        # InfluxDB time-series database (deployment, service, PVC)
+├── influxdb/        # InfluxDB time-series database (deployment, service, PVC)
+│   ├── Chart.yaml
+│   ├── values.yaml
+│   └── templates/
+└── monitoring/      # Grafana + Prometheus (kube-prometheus-stack wrapper)
     ├── Chart.yaml
     ├── values.yaml
+    ├── dashboards/  # Custom dashboard JSON files (auto-loaded)
     └── templates/
 ```
 
@@ -722,7 +750,7 @@ kubectl port-forward svc/ticker-api-service 30090:8090
 
 ## Monitoring (Grafana + Prometheus)
 
-We use the **kube-prometheus-stack** to provide full cluster monitoring and dashboards.
+We use the **kube-prometheus-stack** (Helm chart) to provide full cluster monitoring and dashboards.
 
 ### Accessing Grafana
 
@@ -751,10 +779,80 @@ We use the **kube-prometheus-stack** to provide full cluster monitoring and dash
             NodePort :30030
 ```
 
-### Dashboards
+### Monitoring Helm Chart
+
+The monitoring stack is deployed via `charts/monitoring/`:
+
+```
+charts/monitoring/
+├── Chart.yaml              # Depends on kube-prometheus-stack
+├── values.yaml             # Grafana password, NodePort, InfluxDB datasource config
+├── dashboards/
+│   └── simple-metrics.json # Custom dashboard (auto-loaded via ConfigMap)
+└── templates/
+    └── dashboard-configmap.yaml  # Mounts JSON dashboards into Grafana
+```
+
+Install:
+```bash
+helm dependency build charts/monitoring/
+helm install monitoring charts/monitoring/ -n monitoring --create-namespace
+```
+
+### InfluxDB Datasource
+
+Grafana connects to InfluxDB using the **Flux** query language. The datasource is configured in `charts/monitoring/values.yaml`:
+
+| Setting | Value |
+|---------|-------|
+| **Name** | `InfluxDB` |
+| **URL** | `http://influxdb-service.default.svc.cluster.local:8086` |
+| **Organization** | `ticker` |
+| **Token** | `ticker-secret-token` |
+| **Default Bucket** | `ticks` |
+
+> **Note:** These values must match `charts/influxdb/values.yaml`. If you change the InfluxDB token or org, update both files.
+
+### Custom Dashboard: Simple Metrics (Debug)
+
+The file `charts/monitoring/dashboards/simple-metrics.json` defines a custom dashboard that is auto-loaded into Grafana via a ConfigMap sidecar. It includes the following panels:
+
+| Panel | Data Source | Query Type |
+|-------|-------------|------------|
+| **Access Points** | — | Markdown table with service URLs |
+| **Cluster CPU / Memory** | Prometheus | `node_cpu_seconds_total`, `node_memory_MemTotal_bytes` |
+| **Pod CPU / Memory** | Prometheus | `container_cpu_usage_seconds_total`, `container_memory_usage_bytes` |
+| **Network Traffic (RX)** | Prometheus | `process_network_receive_bytes_total` |
+| **Database Size** | Prometheus | `kubelet_volume_stats_used_bytes` (InfluxDB PVC) |
+| **Market Data (Count, First, Last)** | InfluxDB (Flux) | Queries the `ticks` bucket for per-symbol stats |
+
+#### Market Data Flux Queries
+
+**Total Count** (per symbol):
+```flux
+from(bucket: "ticks")
+  |> range(start: -24h)
+  |> filter(fn: (r) => r["_measurement"] == "ticks" and r["_field"] == "price")
+  |> count()
+```
+
+**First / Last Timestamp** (per symbol):
+```flux
+from(bucket: "ticks")
+  |> range(start: -24h)
+  |> filter(fn: (r) => r["_measurement"] == "ticks" and r["_field"] == "price")
+  |> first()  // or last()
+  |> map(fn: (r) => ({ _value: uint(v: r._time) / uint(v: 1000000), symbol: r.symbol }))
+```
+
+> **Why `uint / 1000000`?** Flux timestamps are in nanoseconds. Grafana's `dateTimeAsIso` unit expects milliseconds, so we divide by 1,000,000.
+
+### Built-in Dashboards
+
+The kube-prometheus-stack also ships several pre-built dashboards:
 
 1. **Kubernetes / Compute Resources / Namespace (Pods):** CPU/Memory usage of the ingester, API, and NATS.
-2. **InfluxDB Data:** You can create a new dashboard, select **InfluxDB** as the datasource, and query the `ticks` bucket to visualize price history alongside infrastructure metrics.
+2. **Node Exporter / Nodes:** Disk, network, and OS-level metrics for cluster nodes.
 
 ---
 
@@ -935,6 +1033,8 @@ The `argocd/` folder contains Application manifests that tell Argo CD **what to 
 ```bash
 kubectl apply -f argocd/nats-app.yaml
 kubectl apply -f argocd/ticker-app.yaml
+kubectl apply -f argocd/influxdb-app.yaml
+kubectl apply -f argocd/monitoring-app.yaml
 ```
 > **Why:** An Argo CD `Application` is a custom Kubernetes resource (CRD). When you `kubectl apply` it, Argo CD's controller picks it up and starts watching the specified Git repo path. We use `kubectl apply` (not the `argocd` CLI) because the manifests are already in our repo — this is the GitOps way.
 
@@ -989,6 +1089,8 @@ Once set up, your workflow becomes:
 |------|---------|
 | `argocd/nats-app.yaml` | Argo CD Application — watches `charts/nats/` in Git |
 | `argocd/ticker-app.yaml` | Argo CD Application — watches `charts/ticker-app/` in Git |
+| `argocd/influxdb-app.yaml` | Argo CD Application — watches `charts/influxdb/` in Git |
+| `argocd/monitoring-app.yaml` | Argo CD Application — watches `charts/monitoring/` in Git |
 
 ---
 
