@@ -12,14 +12,14 @@
             "title": "Access Points",
             "type": "text",
             "gridPos": {
-                "h": 6,
+                "h": 10,
                 "w": 24,
                 "x": 0,
                 "y": 0
             },
             "options": {
                 "mode": "markdown",
-                "content": "| Service | Local URL | User/Pass |\n|---|---|---|\n| **Grafana** | [http://localhost:30030](http://localhost:30030) | `admin` / `ticker` |\n| **Argo CD** | [https://localhost:8443](https://localhost:8443) | `admin` / *(check secret)* |\n| **Ticker UI** | [http://localhost:8080](http://localhost:8080) | - |\n| **Ticker API** | [http://localhost:30090/api/history/BTC-USD](http://localhost:30090/api/history/BTC-USD) | - |\n| **InfluxDB** | [http://localhost:8086](http://localhost:8086) | `admin` / `tickerpass123` |"
+                "content": "| Service | Local URL | User/Pass |\n|---|---|---|\n| **Grafana** | [http://localhost:30030](http://localhost:30030) | `admin` / `ticker` |\n| **Argo CD** | [https://localhost:8443](https://localhost:8443) | `admin` / `H-WTKhxeDDvCoO3c` |\n| **Ticker UI** | [http://localhost:8080](http://localhost:8080) | - |\n| **Ticker API** | [http://localhost:30090/api/history/BTC-USD](http://localhost:30090/api/history/BTC-USD) | - |\n| **InfluxDB** | [http://localhost:8086](http://localhost:8086) | `admin` / `tickerpass123` |"
             }
         },
         {
@@ -29,7 +29,7 @@
                 "h": 7,
                 "w": 12,
                 "x": 0,
-                "y": 6
+                "y": 10
             },
             "targets": [
                 {
@@ -52,7 +52,7 @@
                 "h": 7,
                 "w": 12,
                 "x": 12,
-                "y": 6
+                "y": 10
             },
             "targets": [
                 {
@@ -75,7 +75,7 @@
                 "h": 7,
                 "w": 12,
                 "x": 0,
-                "y": 13
+                "y": 17
             },
             "targets": [
                 {
@@ -96,7 +96,7 @@
                 "h": 7,
                 "w": 12,
                 "x": 12,
-                "y": 13
+                "y": 17
             },
             "targets": [
                 {
@@ -117,7 +117,7 @@
                 "h": 7,
                 "w": 12,
                 "x": 0,
-                "y": 20
+                "y": 24
             },
             "targets": [
                 {
@@ -138,7 +138,7 @@
                 "h": 7,
                 "w": 12,
                 "x": 12,
-                "y": 20
+                "y": 24
             },
             "targets": [
                 {
@@ -183,7 +183,7 @@
                 "h": 6,
                 "w": 8,
                 "x": 0,
-                "y": 27
+                "y": 31
             },
             "targets": [
                 {
@@ -219,7 +219,7 @@
                 "h": 6,
                 "w": 8,
                 "x": 8,
-                "y": 27
+                "y": 31
             },
             "targets": [
                 {
@@ -256,7 +256,7 @@
                 "h": 6,
                 "w": 8,
                 "x": 16,
-                "y": 27
+                "y": 31
             },
             "targets": [
                 {
