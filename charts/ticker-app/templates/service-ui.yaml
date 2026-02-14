@@ -6,9 +6,8 @@ metadata:
   labels:
     {{- include "ticker-app.labels" . | nindent 4 }}
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     {{- include "ticker-app.selectorLabels" . | nindent 4 }}
   ports:
   - port: 80
-    nodePort: {{ .Values.ui.nodePort }}

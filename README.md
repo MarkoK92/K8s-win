@@ -239,46 +239,36 @@ If it compiles without errors, protobuf is set up correctly!
 
 ## Running (Local Development Mode)
 
-You need **7 terminals** when running the full stack locally:
+With Ingress, you only need **4 terminals** (down from 8 — UI, API, WebSocket, and Grafana all go through Ingress automatically):
 
-### Terminal 1: Port Forward Ticker UI
-```bash
-kubectl port-forward svc/nats-gateway-service 30080:8080
-```
-
-### Terminal 2: Port Forward NATS TCP (for local Go ingester)
+### Terminal 1: Port Forward NATS TCP (for local Go ingester)
 ```bash
 kubectl port-forward svc/nats-service 4222:4222
 ```
 
-### Terminal 3: Port Forward Ticker API (history endpoint)
-```bash
-kubectl port-forward svc/ticker-api-service 30090:8090
-```
-
-### Terminal 4: Port Forward InfluxDB (local access / debugging)
+### Terminal 2: Port Forward InfluxDB (local access / debugging)
 ```bash
 kubectl port-forward svc/influxdb-service 8086:8086
 ```
 
-### Terminal 5: Port Forward Argo CD (GitOps UI)
+### Terminal 3: Port Forward Argo CD (GitOps UI)
 ```bash
 kubectl port-forward svc/argocd-server -n argocd 8443:443
 ```
 
-### Terminal 6: Run Go Ingester
+### Terminal 4: Run Go Ingester
 ```bash
 go run main.go
 ```
 
-### Terminal 7: Open Browser
-Open the following URLs:
-- **Ticker UI:** http://localhost:8080
-- **Grafana:** http://localhost:30030
+### Open Browser
+- **Ticker UI:** http://ticker/
+- **Ticker API:** http://ticker/api/history/BTC-USD
+- **Grafana:** http://ticker/grafana/
 - **Argo CD:** https://localhost:8443
 - **InfluxDB:** http://localhost:8086
 
-> **Note:** Grafana is accessible directly via NodePort 30030 without a port-forward. The other services require the port-forwards above.
+> **Prerequisite:** Add `127.0.0.1 ticker` to your hosts file (`C:\Windows\System32\drivers\etc\hosts`). Traefik Ingress controller is pre-installed on k3s (see Ingress section below).
 
 ---
 
@@ -424,16 +414,17 @@ This matters when sending millions of price updates per second!
 
 ## Services & Ports
 
-| Service | Type | Port | Purpose |
-|---------|------|------|---------|
-| `nats-service` | ClusterIP | 4222 | Internal NATS communication |
-| `nats-gateway-service` | NodePort | 30080→8080 | Browser WebSocket |
-| `ticker-ui-service` | NodePort | 30007→80 | Browser HTTP (UI) |
-| `ticker-ingester-service` | NodePort | 30005→5005 | UDP ingestion |
-| `ticker-api-service` | NodePort | 30090→8090 | History API (InfluxDB queries) |
-| `influxdb-service` | ClusterIP | 8086 | InfluxDB HTTP API |
-| `monitoring-grafana` | NodePort | 30030→80 | Grafana dashboards |
-| `monitoring-kube-prometheus-prometheus` | ClusterIP | 9090 | Prometheus metrics |
+| Service | Type | Port | Ingress Path | Purpose |
+|---------|------|------|-------------|---------|
+| `nats-service` | ClusterIP | 4222 | — | Internal NATS communication |
+| `nats-gateway-service` | ClusterIP | 8080 | `/ws` | Browser WebSocket (via Ingress) |
+| `ticker-ui-service` | ClusterIP | 80 | `/` | Browser HTTP UI (via Ingress) |
+| `ticker-ingester-service` | NodePort | 30005→5005 | — | UDP ingestion (Ingress can't do UDP) |
+| `ticker-api-service` | ClusterIP | 8090 | `/api` | History API (via Ingress) |
+| `influxdb-service` | ClusterIP | 8086 | — | InfluxDB HTTP API |
+| `monitoring-grafana` | ClusterIP | 80 | `/grafana` | Grafana dashboards (via Ingress) |
+| `monitoring-kube-prometheus-prometheus` | ClusterIP | 9090 | — | Prometheus metrics |
+| `ticker-ingress` | Ingress | 80 | all paths | Traefik Ingress — routes `http://ticker/*` |
 
 ---
 
@@ -484,10 +475,14 @@ charts/
 │   ├── Chart.yaml
 │   ├── values.yaml
 │   └── templates/
-└── monitoring/      # Grafana + Prometheus (kube-prometheus-stack wrapper)
+├── monitoring/      # Grafana + Prometheus (kube-prometheus-stack wrapper)
+│   ├── Chart.yaml
+│   ├── values.yaml
+│   ├── dashboards/  # Custom dashboard JSON files (auto-loaded)
+│   └── templates/
+└── ingress/         # nginx Ingress resource (path-based routing via http://ticker)
     ├── Chart.yaml
     ├── values.yaml
-    ├── dashboards/  # Custom dashboard JSON files (auto-loaded)
     └── templates/
 ```
 
@@ -542,6 +537,44 @@ Verify:
 ```
 
 > **Note:** Port-forwarding is still required for local development — see [Running (Local Development Mode)](#running-local-development-mode) above.
+
+---
+
+## Ingress (Path-Based Routing)
+
+Instead of multiple NodePort services, all HTTP traffic is routed through the **Traefik Ingress controller** (pre-installed on k3s) using a custom hostname `ticker`.
+
+### Prerequisites
+
+1. **Add hosts file entry** (`C:\Windows\System32\drivers\etc\hosts`, run as Admin):
+   ```
+   127.0.0.1   ticker
+   ```
+
+2. **Deploy the ingress chart:**
+   ```bash
+   helm install ingress charts/ingress/
+   ```
+
+> **Note:** No separate ingress controller installation needed — k3s ships with Traefik already running on port 80.
+
+### Routing Table
+
+| URL | Backend Service | Port |
+|-----|----------------|------|
+| `http://ticker/` | `ticker-ui-service` | 80 |
+| `http://ticker/api/...` | `ticker-api-service` | 8090 |
+| `ws://ticker/ws/` | `nats-gateway-service` | 8080 |
+| `http://ticker/grafana/` | `monitoring-grafana` | 80 |
+
+> **Note:** The UDP ingester (`ticker-ingester-service`) stays on NodePort 30005 — Ingress only supports HTTP/HTTPS. Grafana is accessed via an ExternalName service (`grafana-external`) that bridges the `monitoring` namespace.
+
+### Configuration
+
+The hostname is configurable in `charts/ingress/values.yaml`:
+```yaml
+host: ticker   # Change to your domain for production
+```
 
 ---
 
@@ -695,6 +728,29 @@ writeAPI.WritePoint(context.Background(), p)
 
 Connection is configured via environment variables: `INFLUXDB_URL`, `INFLUXDB_TOKEN`, `INFLUXDB_ORG`, `INFLUXDB_BUCKET`.
 For local development, defaults fall back to `http://localhost:8086`.
+
+### Useful Commands
+
+**SSH into the InfluxDB container:**
+```bash
+kubectl exec -it deploy/influxdb -- sh
+```
+
+**Check database size:**
+```bash
+kubectl exec deploy/influxdb -- du -sh /var/lib/influxdb2/
+```
+
+**Delete all data in the ticks bucket (keep bucket):**
+```bash
+kubectl exec deploy/influxdb -- influx delete --bucket ticks --org ticker --token ticker-secret-token --start "1970-01-01T00:00:00Z" --stop "2030-01-01T00:00:00Z"
+```
+
+**Delete and recreate bucket (fresh start):**
+```bash
+kubectl exec deploy/influxdb -- influx bucket delete --name ticks --org ticker --token ticker-secret-token
+kubectl exec deploy/influxdb -- influx bucket create --name ticks --org ticker --token ticker-secret-token --retention 24h
+```
 
 ---
 
@@ -1035,6 +1091,7 @@ kubectl apply -f argocd/nats-app.yaml
 kubectl apply -f argocd/ticker-app.yaml
 kubectl apply -f argocd/influxdb-app.yaml
 kubectl apply -f argocd/monitoring-app.yaml
+kubectl apply -f argocd/ingress-app.yaml
 ```
 > **Why:** An Argo CD `Application` is a custom Kubernetes resource (CRD). When you `kubectl apply` it, Argo CD's controller picks it up and starts watching the specified Git repo path. We use `kubectl apply` (not the `argocd` CLI) because the manifests are already in our repo — this is the GitOps way.
 
@@ -1091,6 +1148,7 @@ Once set up, your workflow becomes:
 | `argocd/ticker-app.yaml` | Argo CD Application — watches `charts/ticker-app/` in Git |
 | `argocd/influxdb-app.yaml` | Argo CD Application — watches `charts/influxdb/` in Git |
 | `argocd/monitoring-app.yaml` | Argo CD Application — watches `charts/monitoring/` in Git |
+| `argocd/ingress-app.yaml` | Argo CD Application — watches `charts/ingress/` in Git |
 
 ---
 

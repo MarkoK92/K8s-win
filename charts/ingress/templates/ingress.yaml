@@ -1,0 +1,50 @@
+# Ingress resource — routes http://{{ .Values.host }} to backend services
+# Uses Traefik (pre-installed on k3s) as the ingress controller
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ticker-ingress
+  labels:
+    {{- include "ingress.labels" . | nindent 4 }}
+  annotations:
+    # WebSocket support — Traefik handles upgrades automatically,
+    # but we set timeouts for long-lived WS connections
+    traefik.ingress.kubernetes.io/router.middlewares: ""
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: {{ .Values.host }}
+      http:
+        paths:
+          # WebSocket — must come before UI catch-all
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.paths.websocket.serviceName }}
+                port:
+                  number: {{ .Values.paths.websocket.servicePort }}
+          # API
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.paths.api.serviceName }}
+                port:
+                  number: {{ .Values.paths.api.servicePort }}
+          # Grafana (cross-namespace via ExternalName service)
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana-external
+                port:
+                  number: 80
+          # UI — catch-all (must be last)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.paths.ui.serviceName }}
+                port:
+                  number: {{ .Values.paths.ui.servicePort }}

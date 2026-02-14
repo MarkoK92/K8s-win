@@ -1,0 +1,13 @@
+🚀 Ingress has been deployed!
+
+Access your services at:
+  - UI:        http://{{ .Values.host }}/
+  - API:       http://{{ .Values.host }}/api/history/BTC-USD
+  - WebSocket: ws://{{ .Values.host }}/ws/
+  - Grafana:   http://{{ .Values.host }}/grafana/
+
+Prerequisites:
+  Add to your hosts file (C:\Windows\System32\drivers\etc\hosts):
+    127.0.0.1   {{ .Values.host }}
+
+  Traefik is pre-installed on k3s — no additional ingress controller needed.

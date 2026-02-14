@@ -6,9 +6,8 @@ metadata:
   labels:
     {{- include "nats.labels" . | nindent 4 }}
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     {{- include "nats.selectorLabels" . | nindent 4 }}
   ports:
   - port: {{ .Values.websocket.port }}
-    nodePort: {{ .Values.gatewayNodePort }}

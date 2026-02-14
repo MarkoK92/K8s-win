@@ -9,8 +9,13 @@ kube-prometheus-stack:
     adminPassword: ticker
 
     service:
-      type: NodePort
-      nodePort: 30030
+      type: ClusterIP
+
+    # Serve Grafana from /grafana/ sub-path (behind Ingress)
+    grafana.ini:
+      server:
+        root_url: "%(protocol)s://%(domain)s/grafana/"
+        serve_from_sub_path: true
 
     sidecar:
       dashboards:

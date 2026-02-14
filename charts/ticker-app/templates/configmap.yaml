@@ -166,7 +166,7 @@ data:
 
             async function loadHistory() {
                 log("Loading historical data from InfluxDB...");
-                const API_URL = 'http://127.0.0.1:30090';
+                const API_URL = 'http://ticker';
                 for (const symbol of SYMBOLS) {
                     try {
                         const res = await fetch(`${API_URL}/api/history/${symbol}`);
@@ -191,7 +191,7 @@ data:
                 try {
                     log("Connecting to NATS...");
                     const natsModule = await import("https://cdn.jsdelivr.net/npm/nats.ws@1.19.1/+esm");
-                    const nc = await natsModule.connect({ servers: "ws://127.0.0.1:30080" });
+                    const nc = await natsModule.connect({ servers: "ws://ticker/ws" });
                     
                     document.getElementById('status').innerText = 'CONNECTED';
                     document.getElementById('status').className = 'connected';

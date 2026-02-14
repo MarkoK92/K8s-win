@@ -1,0 +1,22 @@
+# Ingress Configuration
+# Set host to your custom hostname (must match hosts file entry)
+host: ticker
+
+# Service routing paths
+paths:
+  ui:
+    path: /
+    serviceName: ticker-ui-service
+    servicePort: 80
+  api:
+    path: /api
+    serviceName: ticker-api-service
+    servicePort: 8090
+  websocket:
+    path: /ws
+    serviceName: nats-gateway-service
+    servicePort: 8080
+  grafana:
+    path: /grafana
+    serviceName: monitoring-grafana.monitoring.svc.cluster.local
+    servicePort: 80

@@ -1,0 +1,12 @@
+# ExternalName service to proxy Grafana from the monitoring namespace
+# Ingress resources can only route to services in the same namespace,
+# so this creates a local alias pointing to Grafana's cross-namespace DNS
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-external
+  labels:
+    {{- include "ingress.labels" . | nindent 4 }}
+spec:
+  type: ExternalName
+  externalName: monitoring-grafana.monitoring.svc.cluster.local
