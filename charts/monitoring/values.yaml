@@ -1,6 +1,10 @@
 # Monitoring Stack Configuration
 # This wraps kube-prometheus-stack with our custom settings
 
+# Ingress hostname (must match the main ingress chart's host value)
+ingress:
+  host: ticker
+
 kube-prometheus-stack:
   # ── Grafana ──────────────────────────────────────────────
   grafana:

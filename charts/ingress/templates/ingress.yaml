@@ -6,10 +6,6 @@ metadata:
   name: ticker-ingress
   labels:
     {{- include "ingress.labels" . | nindent 4 }}
-  annotations:
-    # WebSocket support — Traefik handles upgrades automatically,
-    # but we set timeouts for long-lived WS connections
-    traefik.ingress.kubernetes.io/router.middlewares: ""
 spec:
   ingressClassName: traefik
   rules:
@@ -32,14 +28,6 @@ spec:
                 name: {{ .Values.paths.api.serviceName }}
                 port:
                   number: {{ .Values.paths.api.servicePort }}
-          # Grafana (cross-namespace via ExternalName service)
-          - path: /grafana
-            pathType: Prefix
-            backend:
-              service:
-                name: grafana-external
-                port:
-                  number: 80
           # UI — catch-all (must be last)
           - path: /
             pathType: Prefix
