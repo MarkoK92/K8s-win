@@ -567,13 +567,38 @@ Instead of multiple NodePort services, all HTTP traffic is routed through the **
 | `ws://ticker/ws/` | `nats-gateway-service` | 8080 |
 | `http://ticker/grafana/` | `monitoring-grafana` | 80 |
 
-> **Note:** The UDP ingester (`ticker-ingester-service`) stays on NodePort 30005 — Ingress only supports HTTP/HTTPS. Grafana is accessed via an ExternalName service (`grafana-external`) that bridges the `monitoring` namespace.
+> **Note:** The UDP ingester (`ticker-ingester-service`) stays on NodePort 30005 — Ingress only supports HTTP/HTTPS. Grafana uses a separate Ingress resource in the `monitoring` namespace (since Ingress can only route to services in the same namespace).
 
 ### Configuration
 
 The hostname is configurable in `charts/ingress/values.yaml`:
 ```yaml
 host: ticker   # Change to your domain for production
+```
+
+---
+
+## Health Checks
+
+All deployments include **liveness** and **readiness** probes so Kubernetes can automatically detect and recover from failures:
+
+| Deployment | Endpoint | Liveness | Readiness |
+|-----------|----------|----------|-----------|
+| **Ticker UI** | `GET /` on port 80 | 3s delay, 10s interval | 2s delay, 5s interval |
+| **Ticker API** | `GET /health` on port 8090 | 90s delay, 15s interval | 60s delay, 5s interval |
+| **NATS** | `GET /healthz` on port 8222 | 5s delay, 10s interval | 3s delay, 5s interval |
+| **InfluxDB** | `GET /health` on port 8086 | 10s delay, 15s interval | 5s delay, 5s interval |
+
+### How They Work
+
+- **Liveness probe** — "Is the container stuck?" If it fails repeatedly, Kubernetes **restarts** the container automatically
+- **Readiness probe** — "Can it serve traffic?" If it fails, Kubernetes **removes the pod from the Service** (no traffic routed until it passes again)
+
+### Verify Health Status
+
+```bash
+kubectl describe pod -l app=ticker | findstr -i "Liveness\|Readiness"
+kubectl get pods    # READY column shows readiness (e.g., 1/1 = healthy)
 ```
 
 ---

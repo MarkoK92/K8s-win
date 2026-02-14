@@ -19,7 +19,7 @@
             },
             "options": {
                 "mode": "markdown",
-                "content": "| Service | Local URL | User/Pass |\n|---|---|---|\n| **Grafana** | [http://localhost:30030](http://localhost:30030) | `admin` / `ticker` |\n| **Argo CD** | [https://localhost:8443](https://localhost:8443) | `admin` / `H-WTKhxeDDvCoO3c` |\n| **Ticker UI** | [http://localhost:8080](http://localhost:8080) | - |\n| **Ticker API** | [http://localhost:30090/api/history/BTC-USD](http://localhost:30090/api/history/BTC-USD) | - |\n| **InfluxDB** | [http://localhost:8086](http://localhost:8086) | `admin` / `tickerpass123` |"
+                "content": "| Service | Local URL | User/Pass |\n|---|---|---|\n| **Grafana** | [http://ticker/grafana/](http://ticker/grafana/) | `admin` / `ticker` |\n| **Argo CD** | [https://localhost:8443](https://localhost:8443) | `admin` / `H-WTKhxeDDvCoO3c` |\n| **Ticker UI** | [http://ticker/](http://ticker/) | - |\n| **Ticker API** | [http://ticker/api/history/BTC-USD](http://ticker/api/history/BTC-USD) | - |\n| **InfluxDB** | [http://localhost:8086](http://localhost:8086) | `admin` / `tickerpass123` |"
             }
         },
         {
@@ -300,7 +300,7 @@
     },
     "timepicker": {},
     "timezone": "",
-    "title": "Simple Metrics (Debug)",
+    "title": "Simple Metrics",
     "uid": "simple-metrics",
     "version": 9,
     "weekStart": ""
