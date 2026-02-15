@@ -67,7 +67,11 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /etc/nats
+            - name: jetstream-data
+              mountPath: /data
       volumes:
         - name: config
           configMap:
             name: nats-config
+        - name: jetstream-data
+          emptyDir: {}
