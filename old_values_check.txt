@@ -1,40 +1,23 @@
-# Monitoring Stack Configuration
+﻿# Monitoring Stack Configuration
 # This wraps kube-prometheus-stack with our custom settings
 
-# Ingress hostname (must match the main ingress chart's host value)
-ingress:
-  host: ticker
-
-# Grafana admin password (stored as a Kubernetes Secret, not passed as plaintext)
-grafanaAdminPassword: ticker
-
 kube-prometheus-stack:
-  # ── Grafana ──────────────────────────────────────────────
+  # ÔöÇÔöÇ Grafana ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   grafana:
     enabled: true
     adminUser: admin
-    admin:
-      existingSecret: grafana-admin-secret
-      passwordKey: admin-password
+    adminPassword: ticker
 
     service:
-      type: ClusterIP
-
-    # Serve Grafana from /grafana/ sub-path (behind Ingress)
-    grafana.ini:
-      server:
-        root_url: "%(protocol)s://%(domain)s/grafana/"
-        serve_from_sub_path: true
+      type: NodePort
+      nodePort: 30030
 
     sidecar:
-      datasources:
-        enabled: true
-        label: grafana_datasource
       dashboards:
         enabled: true
         label: grafana_dashboard
 
-    # InfluxDB datasource (Prometheus + Loki are auto-provisioned by their own charts)
+    # Pre-configure InfluxDB as a datasource so you can query tick prices
     additionalDataSources:
       - name: InfluxDB
         type: influxdb
@@ -55,7 +38,7 @@ kube-prometheus-stack:
         cpu: "500m"
         memory: "512Mi"
 
-  # ── Prometheus ───────────────────────────────────────────
+  # ÔöÇÔöÇ Prometheus ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   prometheus:
     prometheusSpec:
       retention: 24h
@@ -78,7 +61,7 @@ kube-prometheus-stack:
               requests:
                 storage: 2Gi
 
-  # ── Disable heavy components not needed for single-node ──
+  # ÔöÇÔöÇ Disable heavy components not needed for single-node ÔöÇÔöÇ
   alertmanager:
     enabled: false
 
