@@ -4,18 +4,18 @@ $cert = New-SelfSignedCertificate -DnsName "ticker" -CertStoreLocation "cert:\Cu
 
 # Export Certificate (Public Key)
 $certParams = @{
-  Cert = $cert
-  Type = "CERT"
-  FilePath = "tls.crt"
+    Cert     = $cert
+    Type     = "CERT"
+    FilePath = "tls.crt"
 }
 Export-Certificate @certParams
 
 # Export Private Key (requires password, we use empty/dummy)
-$pwd = ConvertTo-SecureString -String "password" -Force -AsPlainText
+$securePassword = ConvertTo-SecureString -String "password" -Force -AsPlainText
 $keyParams = @{
-  Cert = $cert
-  FilePath = "tls.pfx"
-  Password = $pwd
+    Cert     = $cert
+    FilePath = "tls.pfx"
+    Password = $securePassword
 }
 Export-PfxCertificate @keyParams
 
