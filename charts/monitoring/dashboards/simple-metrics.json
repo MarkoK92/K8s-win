@@ -25,6 +25,10 @@
         {
             "title": "Cluster CPU Usage",
             "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
             "gridPos": {
                 "h": 7,
                 "w": 12,
@@ -33,6 +37,10 @@
             },
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
                     "expr": "sum(rate(node_cpu_seconds_total{mode!=\"idle\"}[1m])) / sum(machine_cpu_cores) * 100",
                     "legendFormat": "Cluster CPU %"
                 }
@@ -48,6 +56,10 @@
         {
             "title": "Cluster Memory Usage",
             "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
             "gridPos": {
                 "h": 7,
                 "w": 12,
@@ -56,6 +68,10 @@
             },
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
                     "expr": "(sum(node_memory_MemTotal_bytes) - sum(node_memory_MemAvailable_bytes)) / sum(node_memory_MemTotal_bytes) * 100",
                     "legendFormat": "Cluster RAM %"
                 }
@@ -71,6 +87,10 @@
         {
             "title": "CPU Usage per Pod",
             "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
             "gridPos": {
                 "h": 7,
                 "w": 12,
@@ -79,7 +99,11 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(container_cpu_usage_seconds_total[1m])) by (pod)",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"default\"}[1m])) by (pod)",
                     "legendFormat": "{{pod}}"
                 }
             ],
@@ -92,6 +116,10 @@
         {
             "title": "Memory Usage per Pod",
             "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
             "gridPos": {
                 "h": 7,
                 "w": 12,
@@ -100,7 +128,11 @@
             },
             "targets": [
                 {
-                    "expr": "sum(container_memory_usage_bytes) by (pod)",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(container_memory_usage_bytes{namespace=\"default\"}) by (pod)",
                     "legendFormat": "{{pod}}"
                 }
             ],
@@ -113,6 +145,10 @@
         {
             "title": "Network Traffic (RX)",
             "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
             "gridPos": {
                 "h": 7,
                 "w": 12,
@@ -121,7 +157,11 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(process_network_receive_bytes_total[1m])) by (pod)",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"default\"}[1m])) by (pod)",
                     "legendFormat": "{{pod}}"
                 }
             ],
@@ -134,6 +174,10 @@
         {
             "title": "Database Size",
             "type": "stat",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
             "gridPos": {
                 "h": 7,
                 "w": 12,
@@ -142,6 +186,10 @@
             },
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
                     "expr": "sum(kubelet_volume_stats_used_bytes{persistentvolumeclaim=\"influxdb-data\", namespace=\"default\"}) or sum(container_fs_usage_bytes{namespace=\"default\", pod=~\".*influx.*\"})",
                     "legendFormat": "InfluxDB Database"
                 }
