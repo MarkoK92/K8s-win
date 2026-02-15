@@ -53,6 +53,9 @@ spec:
             capabilities:
               drop: ["ALL"]
           workingDir: /app
+          volumeMounts:
+            - name: app-workdir
+              mountPath: /app
           ports:
             - containerPort: 8090
               name: http
@@ -165,3 +168,6 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 5
             failureThreshold: 10
+      volumes:
+        - name: app-workdir
+          emptyDir: {}
