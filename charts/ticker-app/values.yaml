@@ -39,7 +39,7 @@ api:
       memory: "256Mi"
     limits:
       cpu: "500m"
-      memory: "512Mi"
+      memory: "768Mi"
 
 # InfluxDB connection (must match influxdb chart values)
 influxdb:
