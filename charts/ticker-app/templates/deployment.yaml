@@ -14,10 +14,15 @@ spec:
       labels:
         {{- include "ticker-app.selectorLabels" . | nindent 8 }}
     spec:
+      serviceAccountName: ticker-app-sa
       containers:
         # UI - serves the web page
         - name: ui
           image: {{ .Values.ui.image }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           ports:
             - containerPort: 80
               name: http
@@ -46,6 +51,10 @@ spec:
         # Ingester - receives UDP and publishes to NATS
         - name: ingester
           image: {{ .Values.ingester.image }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           workingDir: /app
           resources:
             requests:

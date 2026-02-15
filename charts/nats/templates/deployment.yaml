@@ -14,9 +14,17 @@ spec:
       labels:
         {{- include "nats.selectorLabels" . | nindent 8 }}
     spec:
+      serviceAccountName: nats-sa
       containers:
         - name: nats
           image: {{ .Values.image }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
           args: ["-c", "/etc/nats/nats.conf", "-js"]
           ports:
             - containerPort: 4222

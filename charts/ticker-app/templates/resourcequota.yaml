@@ -1,0 +1,14 @@
+# Resource Quota — prevents runaway resource consumption in the default namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: default-quota
+  labels:
+    {{- include "ticker-app.labels" . | nindent 4 }}
+spec:
+  hard:
+    pods: "10"
+    requests.cpu: "2"
+    requests.memory: 2Gi
+    limits.cpu: "4"
+    limits.memory: 4Gi

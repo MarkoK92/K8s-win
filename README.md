@@ -603,6 +603,74 @@ kubectl get pods    # READY column shows readiness (e.g., 1/1 = healthy)
 
 ---
 
+## Security
+
+### 1. Kubernetes Secrets
+
+Sensitive values (passwords, API tokens) are stored as Kubernetes Secrets instead of plaintext environment variables:
+
+| Secret | Keys | Used By |
+|--------|------|---------|
+| `influxdb-secrets` | `admin-password`, `admin-token` | InfluxDB deployment |
+| `ticker-app-secrets` | `influxdb-token` | Ticker API deployment |
+| `grafana-admin-secret` | `admin-password` | Grafana (via `existingSecret`) |
+
+> **Note:** Values are still defined in `values.yaml` for convenience but rendered as Secret resources. In production, use external secret managers (AWS Secrets Manager, HashiCorp Vault).
+
+*\*nginx and node containers require root for port binding/package installation*
+
+### 2. Network Policies
+
+Pod-to-pod traffic is restricted to only what's needed:
+
+| Policy | Pod | Allowed Inbound |
+|--------|-----|-----------------|
+| `nats-network-policy` | NATS | ticker-app (4222), Traefik (WS), health (8222) |
+| `influxdb-network-policy` | InfluxDB | ticker-api (8086), Grafana/monitoring ns (8086) |
+| `ticker-app-network-policy` | UI + Ingester | Traefik (80), UDP (5005) |
+| `ticker-api-network-policy` | API | Traefik (8090) |
+
+### 3. RBAC (ServiceAccounts)
+
+Each chart has a dedicated ServiceAccount with `automountServiceAccountToken: false`:
+
+| ServiceAccount | Used By | K8s API Access |
+|---------------|---------|----------------|
+| `nats-sa` | NATS deployment | ❌ Disabled |
+| `influxdb-sa` | InfluxDB deployment | ❌ Disabled |
+| `ticker-app-sa` | UI, Ingester, API deployments | ❌ Disabled |
+
+### 4. Resource Quotas
+
+The `default` namespace is limited to prevent runaway resource consumption:
+
+```yaml
+pods: 10
+requests.cpu: 2 / limits.cpu: 4
+requests.memory: 2Gi / limits.memory: 4Gi
+```
+
+### 5. Verify Security
+
+```bash
+# Check secrets
+kubectl get secrets
+
+# Check security contexts
+kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].securityContext}{"\n"}{end}'
+
+# Check network policies
+kubectl get networkpolicies
+
+# Check service accounts
+kubectl get serviceaccounts
+
+# Check resource quotas
+kubectl describe resourcequota default-quota
+```
+
+---
+
 ## Understanding Helm
 
 ### Installing Helm

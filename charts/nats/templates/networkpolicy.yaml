@@ -1,0 +1,36 @@
+# Network Policy — restricts who can talk to NATS
+# Only allows: ticker-app ingester (4222), Ingress controller (8080 WebSocket)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nats-network-policy
+  labels:
+    {{- include "nats.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "nats.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow ticker-app ingester → NATS client port
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ticker-app
+      ports:
+        - port: 4222
+          protocol: TCP
+    # Allow Traefik Ingress → WebSocket port
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - port: {{ .Values.websocket.port }}
+          protocol: TCP
+    # Allow monitoring port for health checks
+    - ports:
+        - port: 8222
+          protocol: TCP

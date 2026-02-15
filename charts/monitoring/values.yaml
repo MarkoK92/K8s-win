@@ -5,12 +5,17 @@
 ingress:
   host: ticker
 
+# Grafana admin password (stored as a Kubernetes Secret, not passed as plaintext)
+grafanaAdminPassword: ticker
+
 kube-prometheus-stack:
   # ── Grafana ──────────────────────────────────────────────
   grafana:
     enabled: true
     adminUser: admin
-    adminPassword: ticker
+    admin:
+      existingSecret: grafana-admin-secret
+      passwordKey: admin-password
 
     service:
       type: ClusterIP

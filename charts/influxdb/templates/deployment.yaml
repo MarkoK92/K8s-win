@@ -14,9 +14,16 @@ spec:
       labels:
         {{- include "influxdb.selectorLabels" . | nindent 8 }}
     spec:
+      serviceAccountName: influxdb-sa
       containers:
         - name: influxdb
           image: {{ .Values.image }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           ports:
             - containerPort: 8086
               name: http
@@ -26,7 +33,10 @@ spec:
             - name: DOCKER_INFLUXDB_INIT_USERNAME
               value: {{ .Values.setup.username | quote }}
             - name: DOCKER_INFLUXDB_INIT_PASSWORD
-              value: {{ .Values.setup.password | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: influxdb-secrets
+                  key: admin-password
             - name: DOCKER_INFLUXDB_INIT_ORG
               value: {{ .Values.setup.org | quote }}
             - name: DOCKER_INFLUXDB_INIT_BUCKET
@@ -34,7 +44,10 @@ spec:
             - name: DOCKER_INFLUXDB_INIT_RETENTION
               value: {{ .Values.setup.retention | quote }}
             - name: DOCKER_INFLUXDB_INIT_ADMIN_TOKEN
-              value: {{ .Values.setup.token | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: influxdb-secrets
+                  key: admin-token
           resources:
             requests:
               cpu: {{ .Values.resources.requests.cpu | quote }}
