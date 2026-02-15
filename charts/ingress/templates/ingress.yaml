@@ -8,6 +8,10 @@ metadata:
     {{- include "ingress.labels" . | nindent 4 }}
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - {{ .Values.host }}
+      secretName: ticker-tls-cert
   rules:
     - host: {{ .Values.host }}
       http:

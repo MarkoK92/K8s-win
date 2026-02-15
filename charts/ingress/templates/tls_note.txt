@@ -1,0 +1,3 @@
+# Create TLS Secret via script
+# We don't commit keys to git, but in a real chart we might use sealed-secrets or external-secrets
+# For local dev, we assume the secret is created manually (as we just did) or via a helper.

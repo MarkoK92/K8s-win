@@ -1,0 +1,12 @@
+# Pod Disruption Budget — ensures availability during voluntary disruptions (e.g. node drain)
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ticker-api-pdb
+  labels:
+    {{- include "ticker-app.labels" . | nindent 4 }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: ticker-api

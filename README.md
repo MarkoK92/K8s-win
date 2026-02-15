@@ -603,6 +603,198 @@ kubectl get pods    # READY column shows readiness (e.g., 1/1 = healthy)
 
 ---
 
+```
+
+---
+
+## Helm Chart Testing
+
+Before deploying, you should validate your charts:
+
+### 1. Linting
+Checks for syntax errors and best practices.
+```bash
+helm lint charts/ticker-app/
+# [INFO] Chart.yaml: icon is recommended
+# 1 chart(s) linted, 0 chart(s) failed
+```
+
+### 2. Template Rendering
+Verifies the YAML generates correctly without applying it.
+```bash
+helm template ticker charts/ticker-app/ --debug
+```
+
+### 3. Integration Tests (`helm test`)
+You can define a Pod in your chart with the `"helm.sh/hook": test` annotation. Helm will run this pod after installation to verify the app works.
+```bash
+helm test ticker-app
+```
+
+---
+
+## TLS & HTTPS (Production)
+
+In a real environment, you wouldn't use plain HTTP. You would use **cert-manager** to automatically provision TLS certificates from Let's Encrypt.
+
+### 1. Local TLS (Self-Signed)
+
+For development, we generated a self-signed certificate:
+- **Hostname**: `https://ticker`
+- **Verification**: Browser will warn "Not Secure", but traffic is encrypted.
+
+**Test via PowerShell:**
+```powershell
+[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+$web = New-Object System.Net.WebClient
+$web.DownloadString("https://ticker")
+```
+
+### 2. Production TLS (cert-manager)
+
+In production, automate this with Let's Encrypt:
+```bash
+helm repo add jetstack https://charts.jetstack.io
+helm install cert-manager ...
+```
+
+---
+
+## CI/CD Pipeline
+
+We implemented a **GitHub Actions** workflow (`.github/workflows/ci.yaml`) that runs on every push:
+1.  **Checkout Code**: Pulls the latest commit.
+2.  **Setup Helm**: Installs Helm v3.
+3.  **Lint Charts**: validates `ticker-app`, `nats`, `influxdb`.
+
+### GitHub Actions vs GitLab CI
+
+If you were using GitLab, the logic would be identical, but the syntax differs:
+
+| Feature | GitHub Actions | GitLab CI |
+|---------|----------------|-----------|
+| **Configuration** | `.github/workflows/*.yaml` | `.gitlab-ci.yml` |
+| **Runner** | `runs-on: ubuntu-latest` | `image: dtzar/helm-kubectl` |
+| **Steps** | `uses: azure/setup-helm@v3` | `script: - helm lint ...` |
+| **Triggers** | `on: push` | `only: - main` |
+
+**GitLab CI Example:**
+```yaml
+stages:
+  - test
+
+lint-charts:
+  stage: test
+  image: dtzar/helm-kubectl
+  script:
+    - helm lint charts/ticker-app/
+```
+
+### 2. Create an Issuer
+Tells cert-manager where to get certificates (e.g., Let's Encrypt Prod).
+```yaml
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: your-email@example.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: traefik
+```
+
+### 3. Update Ingress
+Add the `tls` block to your `ingress.yaml`:
+```yaml
+spec:
+  tls:
+  - hosts:
+    - ticker.example.com
+    secretName: ticker-tls-cert  # cert-manager creates this secret
+  rules:
+  - host: ticker.example.com
+    ...
+```
+
+---
+
+## Production Readiness
+
+We've implemented 5 key patterns for production stability:
+
+### 1. Horizontal Pod Autoscaler (HPA)
+
+Automatically scales pods based on CPU usage.
+
+- **Ticker API**: 2-10 replicas (target 70% CPU)
+- **NATS**: 2-5 replicas (target 60% CPU)
+
+```bash
+kubectl get hpa
+# NAME             REFERENCE               TARGETS   MINPODS   MAXPODS   REPLICAS
+# ticker-api-hpa   Deployment/ticker-api   1%/70%    2         10        2
+```
+
+### 2. Pod Disruption Budgets (PDB)
+
+Guarantees application availability during voluntary disruptions (e.g., node upgrades).
+
+- **API & NATS**: `minAvailable: 1` — Kubernetes will refuse to drain a node if it would cause fewer than 1 pod to be running.
+
+### 3. Init Containers
+
+Ensures dependencies are ready before the app starts.
+
+- **Ticker API**: Has an `initContainer` that waits for InfluxDB (port 8086) to be reachable. Prevents crash loops during cluster startup.
+
+### 4. ConfigMap Hot-Reload
+
+Updates configuration without manual restarts.
+
+- **Deployments** have a checksum annotation:
+  `checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}`
+- If you change `configmap.yaml`, Helm automatically triggers a rolling restart of the pods.
+
+### 5. Multi-Environment Configuration
+
+Instead of hardcoding values, we use specific values files:
+
+- **`values-dev.yaml`**: 1 replica, low limits, debug logging
+- **`values-prod.yaml`**: 3 replicas, high limits, HA enabled
+
+#### How It Works (The "Magic")
+
+Kubernetes doesn't know about these files automatically. You must explicitly tell **Helm** which one to use at deploy time:
+
+**1. Manual Deployment (CLI):**
+You pass the `-f` flag to the helm command:
+```bash
+# Dev
+helm upgrade --install ticker-app charts/ticker-app -f charts/ticker-app/values-dev.yaml
+
+# Prod
+helm upgrade --install ticker-app charts/ticker-app -f charts/ticker-app/values-prod.yaml
+```
+
+**2. GitOps (Argo CD):**
+In the Argo CD Application manifest (`argocd/ticker-app-prod.yaml`), you specify the file in the `source` section:
+```yaml
+source:
+  helm:
+    valueFiles:
+      - values-prod.yaml   # <--- This tells Argo CD to use the prod file
+```
+
+Helm merges these files: `values.yaml` (default) + `values-prod.yaml` (overrides) → **Final Manifest** → Kubernetes.
+
+---
+
 ## Security
 
 ### 1. Kubernetes Secrets

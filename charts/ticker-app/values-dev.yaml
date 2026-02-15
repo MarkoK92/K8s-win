@@ -1,0 +1,28 @@
+# Development Environment Values
+# Smaller footprint, debug logging
+
+replicas: 1
+
+ui:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+api:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+ingester:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+influxdb:
+  host: influxdb-service
+  port: 8086
+  org: ticker-org
+  bucket: ticker-bucket

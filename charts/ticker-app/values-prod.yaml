@@ -1,0 +1,28 @@
+# Production Environment Values
+# High availability, higher limits
+
+replicas: 3
+
+ui:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+api:
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+ingester:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+influxdb:
+  host: influxdb-service
+  port: 8086
+  org: ticker-org
+  bucket: ticker-bucket

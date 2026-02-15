@@ -4,6 +4,8 @@ metadata:
   name: ticker-app
   labels:
     {{- include "ticker-app.labels" . | nindent 4 }}
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
 spec:
   replicas: {{ .Values.replicas }}
   selector:
