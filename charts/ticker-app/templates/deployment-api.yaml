@@ -60,6 +60,10 @@ spec:
             - containerPort: 8090
               name: http
           env:
+            - name: GOCACHE
+              value: "/app/.cache/go-build"
+            - name: GOPATH
+              value: "/app/.gopath"
             - name: INFLUXDB_URL
               value: "http://{{ .Values.influxdb.host }}:{{ .Values.influxdb.port }}"
             - name: INFLUXDB_TOKEN
