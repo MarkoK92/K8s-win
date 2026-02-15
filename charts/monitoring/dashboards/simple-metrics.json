@@ -179,10 +179,10 @@
                 "uid": "prometheus"
             },
             "gridPos": {
-                "h": 7,
-                "w": 12,
-                "x": 12,
-                "y": 24
+                "h": 6,
+                "w": 4,
+                "x": 20,
+                "y": 12
             },
             "targets": [
                 {
@@ -190,13 +190,13 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "sum(kubelet_volume_stats_used_bytes{persistentvolumeclaim=\"influxdb-data\", namespace=\"default\"}) or sum(container_fs_usage_bytes{namespace=\"default\", pod=~\".*influx.*\"})",
-                    "legendFormat": "InfluxDB Database"
+                    "expr": "sum(storage_shard_disk_size)",
+                    "legendFormat": "InfluxDB Size"
                 }
             ],
             "fieldConfig": {
                 "defaults": {
-                    "unit": "bytes",
+                    "unit": "decbytes",
                     "color": {
                         "mode": "thresholds"
                     },
