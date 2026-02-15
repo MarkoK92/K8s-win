@@ -161,7 +161,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"default\"}[1m])) by (pod)",
+                    "expr": "sum(rate(process_network_receive_bytes_total[1m])) by (pod)",
                     "legendFormat": "{{pod}}"
                 }
             ],
