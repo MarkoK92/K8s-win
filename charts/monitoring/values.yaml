@@ -27,6 +27,9 @@ kube-prometheus-stack:
         serve_from_sub_path: true
 
     sidecar:
+      datasources:
+        enabled: true
+        label: grafana_datasource
       dashboards:
         enabled: true
         label: grafana_dashboard
