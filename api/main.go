@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // HistoryPoint matches the old JSON format so the UI doesn't need big changes
@@ -103,6 +104,10 @@ func main() {
 	port := getEnv("PORT", "8090")
 	fmt.Printf("🚀 Ticker API listening on :%s\n", port)
 	fmt.Printf("📊 InfluxDB: %s (org: %s, bucket: %s)\n", influxURL, influxOrg, influxBucket)
+
+	// Expose Prometheus metrics
+	http.Handle("/metrics", promhttp.Handler())
+
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 

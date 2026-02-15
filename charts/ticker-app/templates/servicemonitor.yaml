@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "ticker-app.fullname" . }}-api
+  labels:
+    {{- include "ticker-app.labels" . | nindent 4 }}
+    release: monitoring
+spec:
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: api
+      {{- include "ticker-app.selectorLabels" . | nindent 6 }}
+  endpoints:
+  - port: http
+    path: /metrics
