@@ -17,9 +17,21 @@ spec:
         {{- include "nats.selectorLabels" . | nindent 8 }}
     spec:
       serviceAccountName: nats-sa
+      priorityClassName: critical-infrastructure
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              {{- include "nats.selectorLabels" . | nindent 14 }}
       containers:
         - name: nats
           image: {{ .Values.image }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 5"]
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000

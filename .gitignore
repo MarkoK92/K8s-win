@@ -1,2 +1,9 @@
 data/
 ingester.exe
+
+# TLS / Certificates
+*.key
+*.crt
+*.csr
+*.pfx
+*.pem

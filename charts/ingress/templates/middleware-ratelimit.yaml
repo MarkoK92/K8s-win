@@ -1,0 +1,12 @@
+# Traefik Rate-Limiting Middleware
+# Limits each client IP to 100 requests/second (average), with a burst of 200
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: rate-limit
+  labels:
+    {{- include "ingress.labels" . | nindent 4 }}
+spec:
+  rateLimit:
+    average: 100
+    burst: 200

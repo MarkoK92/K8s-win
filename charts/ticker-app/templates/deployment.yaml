@@ -17,10 +17,22 @@ spec:
         {{- include "ticker-app.selectorLabels" . | nindent 8 }}
     spec:
       serviceAccountName: ticker-app-sa
+      priorityClassName: application-high
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              {{- include "ticker-app.selectorLabels" . | nindent 14 }}
       containers:
         # UI - serves the web page
         - name: ui
           image: {{ .Values.ui.image }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 5"]
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

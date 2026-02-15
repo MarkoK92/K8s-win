@@ -43,6 +43,12 @@ kube-prometheus-stack:
           defaultBucket: ticks
         secureJsonData:
           token: ticker-secret-token
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki.monitoring.svc.cluster.local:3100
+        jsonData:
+          maxLines: 1000
 
     resources:
       requests:

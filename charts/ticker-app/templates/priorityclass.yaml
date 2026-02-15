@@ -1,0 +1,25 @@
+# PriorityClasses — controls which pods survive resource pressure
+# Critical: NATS and API are essential, UI/Monitoring can be evicted first
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: critical-infrastructure
+value: 1000000
+globalDefault: false
+description: "For core infrastructure: NATS, InfluxDB"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: application-high
+value: 500000
+globalDefault: false
+description: "For application workloads: Ticker API, Ticker UI"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: application-low
+value: 100000
+globalDefault: true
+description: "Default priority for non-critical workloads"

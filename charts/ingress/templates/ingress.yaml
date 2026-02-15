@@ -6,6 +6,8 @@ metadata:
   name: ticker-ingress
   labels:
     {{- include "ingress.labels" . | nindent 4 }}
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: default-rate-limit@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:

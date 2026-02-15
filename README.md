@@ -1542,3 +1542,80 @@ We chose InfluxDB for this project. Here is how it compares to other options:
 | **Use Case** | Recent history buffer | High-concurrency cache | Long-term analytics |
 
 > **Rule of thumb:** Start with InfluxDB. Add Redis if you have 1000+ concurrent users reading history. Add ClickHouse if you need to analyze years of data.
+
+---
+
+## Enterprise Readiness (Implemented)
+
+Beyond Day 1, we've added **Day 2 operational layers** to harden the cluster:
+
+### 1. Centralized Logging (Loki)
+
+**Problem:** When a pod crashes and Kubernetes replaces it, the old pod's logs are gone forever. `kubectl logs` only shows the *current* pod. If a crash happened at 3 AM, you have no way to debug it in the morning.
+
+**Solution:** We installed **Loki** (log storage) + **Promtail** (log collector). Promtail runs as a DaemonSet on every node, tails all container logs, and ships them to Loki. Loki stores them so you can search historical logs.
+
+**How to use:**
+- Open **Grafana** → click **Explore** (compass icon) → select **Loki** datasource
+- Query: `{namespace="default"}` shows all logs from your apps
+- Filter by pod: `{namespace="default", pod=~"ticker-api.*"}`
+
+### 2. Policy Enforcement (Kyverno)
+
+**Problem:** Security contexts (`runAsNonRoot`, resource limits) are *voluntary*. A developer could push a new deployment without them, and Kubernetes would happily run it. There's no guardrail to catch mistakes.
+
+**Solution:** **Kyverno** is a policy engine that intercepts every resource before it's created. We defined two policies:
+- `require-run-as-non-root` — flags any pod that doesn't set `securityContext.runAsNonRoot: true`
+- `require-resource-limits` — flags any pod missing `resources.limits.cpu` or `resources.limits.memory`
+
+Currently set to **Audit** mode (warns but doesn't block). Change to **Enforce** to hard-block non-compliant deployments:
+```bash
+kubectl get cpol                          # List policies
+kubectl get policyreport -A               # View violations
+```
+
+> **Tip:** Change `validationFailureAction: Audit` → `Enforce` in `kyverno-policies.yaml` when you're confident all workloads comply.
+
+### 3. Container Scanning (Trivy)
+
+**Problem:** You build your app on `node:18-alpine` today and it's clean. Next week, a critical CVE is discovered in that base image. Without scanning, you'd never know your deployed containers are vulnerable.
+
+**Solution:** We added **Trivy** to the GitHub Actions CI pipeline. On every push, it scans the `node:18-alpine` image for **CRITICAL** severity vulnerabilities. If any are found, the build **fails** — forcing you to update the base image before deploying.
+
+### 4. Topology Spread Constraints
+
+**Problem:** When HPA scales your API from 2 to 6 pods, Kubernetes might schedule all 6 on the same node. If that node crashes, all 6 pods die simultaneously — your "high availability" was an illusion.
+
+**Solution:** `topologySpreadConstraints` tells the scheduler: "spread pods evenly across nodes." We set `maxSkew: 1` with `whenUnsatisfiable: ScheduleAnyway` (best-effort on our single node, enforced on multi-node clusters).
+
+### 5. Pod Priority Classes
+
+**Problem:** When a node runs out of memory, Kubernetes must evict (kill) pods to free resources. Without priorities, it picks randomly — it might kill NATS (critical infrastructure) instead of a monitoring sidecar.
+
+**Solution:** We created three `PriorityClass` tiers. During resource pressure, Kubernetes evicts **low-priority pods first**:
+
+| Class | Value | Assigned To | Eviction Order |
+|-------|-------|-------------|----------------|
+| `critical-infrastructure` | 1,000,000 | NATS | Last to die |
+| `application-high` | 500,000 | Ticker API, UI | Second |
+| `application-low` | 100,000 | Default (everything else) | First to die |
+
+### 6. Rate Limiting
+
+**Problem:** Without rate limiting, a single client (or bot) could send 10,000 requests/second to your API, overwhelming the backend and making the service unavailable for everyone else (a basic DoS attack).
+
+**Solution:** We created a **Traefik Middleware** (`middleware-ratelimit.yaml`) that caps each client IP to **100 requests/second** average, with a **burst of 200**. The middleware is wired to the Ingress via annotation. Any client exceeding the limit gets a `429 Too Many Requests` response.
+
+### 7. Graceful Shutdown
+
+**Problem:** During a rolling update, Kubernetes sends SIGTERM to the old pod and immediately creates a new one. But the Service (load balancer) might still be routing traffic to the old pod for a few milliseconds. Those in-flight requests get **dropped** — users see errors.
+
+**Solution:** We added a `preStop` lifecycle hook to every container:
+```yaml
+lifecycle:
+  preStop:
+    exec:
+      command: ["/bin/sh", "-c", "sleep 5"]
+```
+This 5-second delay gives the Service time to remove the pod from its endpoint list *before* the process actually shuts down. Result: **zero dropped requests** during deployments.
+

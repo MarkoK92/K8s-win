@@ -26,6 +26,14 @@ jobs:
       - name: Lint InfluxDB
         run: helm lint charts/influxdb/
 
+      - name: Trivy - Scan Container Images
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'node:18-alpine'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL'
+
       # In a real pipeline, you'd also run:
       # - helm test (needs a k8s cluster, e.g. using kind-action)
       # - docker build & push (needs credentials)
