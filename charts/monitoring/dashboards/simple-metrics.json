@@ -1,40 +1,134 @@
 {
     "annotations": {
-        "list": []
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
     },
     "editable": true,
-    "gnetId": null,
+    "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": null,
+    "id": 25,
     "links": [],
     "panels": [
         {
-            "title": "Access Points",
-            "type": "text",
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
             "gridPos": {
                 "h": 7,
                 "w": 24,
                 "x": 0,
                 "y": 0
             },
+            "id": 1,
             "options": {
-                "mode": "markdown",
-                "content": "| Service | Local URL | User/Pass |\n|---|---|---|\n| **Grafana** | [http://ticker/grafana/](http://ticker/grafana/) | `admin` / `ticker` |\n| **Argo CD** | [https://localhost:8443](https://localhost:8443) | `admin` / `H-WTKhxeDDvCoO3c` |\n| **Ticker UI** | [http://ticker/](http://ticker/) | - |\n| **Ticker API** | [http://ticker/api/history/BTC-USD](http://ticker/api/history/BTC-USD) | - |\n| **InfluxDB** | [http://localhost:8086](http://localhost:8086) | `admin` / `tickerpass123` |"
-            }
+                "code": {
+                    "language": "plaintext",
+                    "showLineNumbers": false,
+                    "showMiniMap": false
+                },
+                "content": "| Service | Local URL | User/Pass |\n|---|---|---|\n| **Grafana** | [http://ticker/grafana/](http://ticker/grafana/) | `admin` / `ticker` |\n| **Argo CD** | [https://localhost:8443](https://localhost:8443) | `admin` / `H-WTKhxeDDvCoO3c` |\n| **Ticker UI** | [http://ticker/](http://ticker/) | - |\n| **Ticker API** | [http://ticker/api/history/BTC-USD](http://ticker/api/history/BTC-USD) | - |\n| **InfluxDB** | [http://localhost:8086](http://localhost:8086) | `admin` / `tickerpass123` |",
+                "mode": "markdown"
+            },
+            "pluginVersion": "11.3.0",
+            "title": "Access Points",
+            "type": "text"
         },
         {
-            "title": "Cluster CPU Usage",
-            "type": "timeseries",
             "datasource": {
                 "type": "prometheus",
                 "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "max": 100,
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "percent"
+                },
+                "overrides": []
             },
             "gridPos": {
                 "h": 7,
                 "w": 12,
                 "x": 0,
-                "y": 10
+                "y": 7
             },
+            "id": 2,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "11.3.0",
             "targets": [
                 {
                     "datasource": {
@@ -42,30 +136,96 @@
                         "uid": "prometheus"
                     },
                     "expr": "sum(rate(node_cpu_seconds_total{mode!=\"idle\"}[1m])) / sum(machine_cpu_cores) * 100",
-                    "legendFormat": "Cluster CPU %"
+                    "legendFormat": "Cluster CPU %",
+                    "refId": "A"
                 }
             ],
-            "fieldConfig": {
-                "defaults": {
-                    "min": 0,
-                    "max": 100,
-                    "unit": "percent"
-                }
-            }
+            "title": "Cluster CPU Usage",
+            "type": "timeseries"
         },
         {
-            "title": "Cluster Memory Usage",
-            "type": "timeseries",
             "datasource": {
                 "type": "prometheus",
                 "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "max": 100,
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "percent"
+                },
+                "overrides": []
             },
             "gridPos": {
                 "h": 7,
                 "w": 12,
                 "x": 12,
-                "y": 10
+                "y": 7
             },
+            "id": 3,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "11.3.0",
             "targets": [
                 {
                     "datasource": {
@@ -73,30 +233,94 @@
                         "uid": "prometheus"
                     },
                     "expr": "(sum(node_memory_MemTotal_bytes) - sum(node_memory_MemAvailable_bytes)) / sum(node_memory_MemTotal_bytes) * 100",
-                    "legendFormat": "Cluster RAM %"
+                    "legendFormat": "Cluster RAM %",
+                    "refId": "A"
                 }
             ],
-            "fieldConfig": {
-                "defaults": {
-                    "min": 0,
-                    "max": 100,
-                    "unit": "percent"
-                }
-            }
+            "title": "Cluster Memory Usage",
+            "type": "timeseries"
         },
         {
-            "title": "CPU Usage per Pod",
-            "type": "timeseries",
             "datasource": {
                 "type": "prometheus",
                 "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
             },
             "gridPos": {
                 "h": 7,
                 "w": 12,
                 "x": 0,
-                "y": 17
+                "y": 14
             },
+            "id": 4,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "11.3.0",
             "targets": [
                 {
                     "datasource": {
@@ -104,102 +328,24 @@
                         "uid": "prometheus"
                     },
                     "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"default\"}[1m])) by (pod)",
-                    "legendFormat": "{{pod}}"
+                    "legendFormat": "{{pod}}",
+                    "refId": "A"
                 }
             ],
-            "fieldConfig": {
-                "defaults": {
-                    "unit": "short"
-                }
-            }
+            "title": "CPU Usage per Pod",
+            "type": "timeseries"
         },
         {
-            "title": "Memory Usage per Pod",
-            "type": "timeseries",
             "datasource": {
                 "type": "prometheus",
                 "uid": "prometheus"
             },
-            "gridPos": {
-                "h": 7,
-                "w": 12,
-                "x": 12,
-                "y": 17
-            },
-            "targets": [
-                {
-                    "datasource": {
-                        "type": "prometheus",
-                        "uid": "prometheus"
-                    },
-                    "expr": "sum(container_memory_usage_bytes{namespace=\"default\"}) by (pod)",
-                    "legendFormat": "{{pod}}"
-                }
-            ],
             "fieldConfig": {
                 "defaults": {
-                    "unit": "bytes"
-                }
-            }
-        },
-        {
-            "title": "Network Traffic (RX)",
-            "type": "timeseries",
-            "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-            },
-            "gridPos": {
-                "h": 7,
-                "w": 12,
-                "x": 0,
-                "y": 24
-            },
-            "targets": [
-                {
-                    "datasource": {
-                        "type": "prometheus",
-                        "uid": "prometheus"
-                    },
-                    "expr": "sum(rate(process_network_receive_bytes_total[1m])) by (pod)",
-                    "legendFormat": "{{pod}}"
-                }
-            ],
-            "fieldConfig": {
-                "defaults": {
-                    "unit": "Bps"
-                }
-            }
-        },
-        {
-            "title": "Database Size",
-            "type": "stat",
-            "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-            },
-            "gridPos": {
-                "h": 6,
-                "w": 4,
-                "x": 20,
-                "y": 12
-            },
-            "targets": [
-                {
-                    "datasource": {
-                        "type": "prometheus",
-                        "uid": "prometheus"
-                    },
-                    "expr": "sum(storage_shard_disk_size) + sum(storage_wal_size)",
-                    "legendFormat": "InfluxDB Size (TSM + WAL)"
-                }
-            ],
-            "fieldConfig": {
-                "defaults": {
-                    "unit": "decbytes",
                     "color": {
                         "mode": "thresholds"
                     },
+                    "mappings": [],
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
@@ -216,123 +362,434 @@
                                 "value": 5000000000
                             }
                         ]
-                    }
+                    },
+                    "unit": "decbytes"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 12,
+                "x": 12,
+                "y": 14
+            },
+            "id": 7,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "11.3.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(storage_shard_disk_size) + sum(storage_wal_size)",
+                    "legendFormat": "InfluxDB Size (TSM + WAL)",
+                    "refId": "A"
                 }
-            }
+            ],
+            "title": "Database Size",
+            "type": "stat"
         },
         {
-            "title": "Market Data: Total Count",
-            "type": "stat",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "Bps"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 12,
+                "x": 0,
+                "y": 21
+            },
+            "id": 6,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "11.3.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(rate(process_network_receive_bytes_total[1m])) by (pod)",
+                    "legendFormat": "{{pod}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Network Traffic (RX)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "bytes"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 12,
+                "x": 12,
+                "y": 21
+            },
+            "id": 5,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "11.3.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(container_memory_usage_bytes{namespace=\"default\"}) by (pod)",
+                    "legendFormat": "{{pod}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Memory Usage per Pod",
+            "type": "timeseries"
+        },
+        {
             "datasource": {
                 "type": "influxdb",
                 "uid": "InfluxDB"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "continuous-GrYlRd"
+                    },
+                    "displayName": "${__field.labels.symbol}",
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
             },
             "gridPos": {
                 "h": 6,
                 "w": 8,
                 "x": 0,
-                "y": 31
+                "y": 28
             },
+            "id": 8,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "horizontal",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "11.3.0",
             "targets": [
                 {
                     "query": "from(bucket: \"ticks\") |> range(start: -24h) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\" and r[\"_field\"] == \"price\") |> count()",
                     "refId": "A"
                 }
             ],
-            "fieldConfig": {
-                "defaults": {
-                    "unit": "short",
-                    "color": {
-                        "mode": "continuous-GrYlRd"
-                    },
-                    "displayName": "${__field.labels.symbol}"
-                }
-            },
-            "options": {
-                "orientation": "horizontal",
-                "textMode": "auto",
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto"
-            }
+            "title": "Market Data: Total Count",
+            "type": "stat"
         },
         {
-            "title": "Market Data: First Timestamp",
-            "type": "stat",
             "datasource": {
                 "type": "influxdb",
                 "uid": "InfluxDB"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "fixedColor": "blue",
+                        "mode": "fixed"
+                    },
+                    "displayName": "${__field.labels.symbol}",
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "dateTimeAsIso"
+                },
+                "overrides": []
             },
             "gridPos": {
                 "h": 6,
                 "w": 8,
                 "x": 8,
-                "y": 31
+                "y": 28
             },
+            "id": 9,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "horizontal",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "11.3.0",
             "targets": [
                 {
                     "query": "from(bucket: \"ticks\") |> range(start: -24h) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\" and r[\"_field\"] == \"price\") |> first() |> map(fn: (r) => ({ _value: uint(v: r._time) / uint(v: 1000000), symbol: r.symbol }))",
                     "refId": "A"
                 }
             ],
-            "fieldConfig": {
-                "defaults": {
-                    "unit": "dateTimeAsIso",
-                    "color": {
-                        "mode": "fixed",
-                        "fixedColor": "blue"
-                    },
-                    "displayName": "${__field.labels.symbol}"
-                }
-            },
-            "options": {
-                "orientation": "horizontal",
-                "textMode": "auto",
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto"
-            }
+            "title": "Market Data: First Timestamp",
+            "type": "stat"
         },
         {
-            "title": "Market Data: Last Timestamp",
-            "type": "stat",
             "datasource": {
                 "type": "influxdb",
                 "uid": "InfluxDB"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "fixedColor": "green",
+                        "mode": "fixed"
+                    },
+                    "displayName": "${__field.labels.symbol}",
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "dateTimeAsIso"
+                },
+                "overrides": []
             },
             "gridPos": {
                 "h": 6,
                 "w": 8,
                 "x": 16,
-                "y": 31
+                "y": 28
             },
+            "id": 10,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "horizontal",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "11.3.0",
             "targets": [
                 {
                     "query": "from(bucket: \"ticks\") |> range(start: -24h) |> filter(fn: (r) => r[\"_measurement\"] == \"ticks\" and r[\"_field\"] == \"price\") |> last() |> map(fn: (r) => ({ _value: uint(v: r._time) / uint(v: 1000000), symbol: r.symbol }))",
                     "refId": "A"
                 }
             ],
-            "fieldConfig": {
-                "defaults": {
-                    "unit": "dateTimeAsIso",
-                    "color": {
-                        "mode": "fixed",
-                        "fixedColor": "green"
-                    },
-                    "displayName": "${__field.labels.symbol}"
-                }
-            },
-            "options": {
-                "orientation": "horizontal",
-                "textMode": "auto",
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto"
-            }
+            "title": "Market Data: Last Timestamp",
+            "type": "stat"
         }
     ],
-    "schemaVersion": 36,
-    "style": "dark",
+    "preload": false,
+    "schemaVersion": 40,
     "tags": [
         "simple",
         "detailed",
@@ -350,6 +807,6 @@
     "timezone": "",
     "title": "Simple Metrics",
     "uid": "simple-metrics",
-    "version": 9,
+    "version": 3,
     "weekStart": ""
 }
