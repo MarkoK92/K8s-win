@@ -1,0 +1,653 @@
+﻿# HELP boltdb_reads_total Total number of boltdb reads
+# TYPE boltdb_reads_total counter
+boltdb_reads_total 189
+# HELP boltdb_writes_total Total number of boltdb writes
+# TYPE boltdb_writes_total counter
+boltdb_writes_total 12
+# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
+# TYPE go_gc_duration_seconds summary
+go_gc_duration_seconds{quantile="0"} 3.5921e-05
+go_gc_duration_seconds{quantile="0.25"} 8.9931e-05
+go_gc_duration_seconds{quantile="0.5"} 0.000163394
+go_gc_duration_seconds{quantile="0.75"} 0.000500841
+go_gc_duration_seconds{quantile="1"} 0.00282241
+go_gc_duration_seconds_sum 0.00606397
+go_gc_duration_seconds_count 12
+# HELP go_goroutines Number of goroutines that currently exist.
+# TYPE go_goroutines gauge
+go_goroutines 1234
+# HELP go_info Information about the Go environment.
+# TYPE go_info gauge
+go_info{version="go1.23.9"} 1
+# HELP go_memstats_alloc_bytes Number of bytes allocated and still in use.
+# TYPE go_memstats_alloc_bytes gauge
+go_memstats_alloc_bytes 3.3190488e+07
+# HELP go_memstats_alloc_bytes_total Total number of bytes allocated, even if freed.
+# TYPE go_memstats_alloc_bytes_total counter
+go_memstats_alloc_bytes_total 2.16013416e+08
+# HELP go_memstats_buck_hash_sys_bytes Number of bytes used by the profiling bucket hash table.
+# TYPE go_memstats_buck_hash_sys_bytes gauge
+go_memstats_buck_hash_sys_bytes 2.841554e+06
+# HELP go_memstats_frees_total Total number of frees.
+# TYPE go_memstats_frees_total counter
+go_memstats_frees_total 782438
+# HELP go_memstats_gc_sys_bytes Number of bytes used for garbage collection system metadata.
+# TYPE go_memstats_gc_sys_bytes gauge
+go_memstats_gc_sys_bytes 4.409312e+06
+# HELP go_memstats_heap_alloc_bytes Number of heap bytes allocated and still in use.
+# TYPE go_memstats_heap_alloc_bytes gauge
+go_memstats_heap_alloc_bytes 3.3190488e+07
+# HELP go_memstats_heap_idle_bytes Number of heap bytes waiting to be used.
+# TYPE go_memstats_heap_idle_bytes gauge
+go_memstats_heap_idle_bytes 2.9155328e+07
+# HELP go_memstats_heap_inuse_bytes Number of heap bytes that are in use.
+# TYPE go_memstats_heap_inuse_bytes gauge
+go_memstats_heap_inuse_bytes 4.1951232e+07
+# HELP go_memstats_heap_objects Number of allocated objects.
+# TYPE go_memstats_heap_objects gauge
+go_memstats_heap_objects 111491
+# HELP go_memstats_heap_released_bytes Number of heap bytes released to OS.
+# TYPE go_memstats_heap_released_bytes gauge
+go_memstats_heap_released_bytes 1.3418496e+07
+# HELP go_memstats_heap_sys_bytes Number of heap bytes obtained from system.
+# TYPE go_memstats_heap_sys_bytes gauge
+go_memstats_heap_sys_bytes 7.110656e+07
+# HELP go_memstats_last_gc_time_seconds Number of seconds since 1970 of last garbage collection.
+# TYPE go_memstats_last_gc_time_seconds gauge
+go_memstats_last_gc_time_seconds 1.7712762167618508e+09
+# HELP go_memstats_lookups_total Total number of pointer lookups.
+# TYPE go_memstats_lookups_total counter
+go_memstats_lookups_total 0
+# HELP go_memstats_mallocs_total Total number of mallocs.
+# TYPE go_memstats_mallocs_total counter
+go_memstats_mallocs_total 893929
+# HELP go_memstats_mcache_inuse_bytes Number of bytes in use by mcache structures.
+# TYPE go_memstats_mcache_inuse_bytes gauge
+go_memstats_mcache_inuse_bytes 19200
+# HELP go_memstats_mcache_sys_bytes Number of bytes used for mcache structures obtained from system.
+# TYPE go_memstats_mcache_sys_bytes gauge
+go_memstats_mcache_sys_bytes 31200
+# HELP go_memstats_mspan_inuse_bytes Number of bytes in use by mspan structures.
+# TYPE go_memstats_mspan_inuse_bytes gauge
+go_memstats_mspan_inuse_bytes 535840
+# HELP go_memstats_mspan_sys_bytes Number of bytes used for mspan structures obtained from system.
+# TYPE go_memstats_mspan_sys_bytes gauge
+go_memstats_mspan_sys_bytes 750720
+# HELP go_memstats_next_gc_bytes Number of heap bytes when next garbage collection will take place.
+# TYPE go_memstats_next_gc_bytes gauge
+go_memstats_next_gc_bytes 6.5407912e+07
+# HELP go_memstats_other_sys_bytes Number of bytes used for other system allocations.
+# TYPE go_memstats_other_sys_bytes gauge
+go_memstats_other_sys_bytes 3.13319e+06
+# HELP go_memstats_stack_inuse_bytes Number of bytes in use by the stack allocator.
+# TYPE go_memstats_stack_inuse_bytes gauge
+go_memstats_stack_inuse_bytes 4.325376e+06
+# HELP go_memstats_stack_sys_bytes Number of bytes obtained from system for stack allocator.
+# TYPE go_memstats_stack_sys_bytes gauge
+go_memstats_stack_sys_bytes 4.325376e+06
+# HELP go_memstats_sys_bytes Number of bytes obtained from system.
+# TYPE go_memstats_sys_bytes gauge
+go_memstats_sys_bytes 8.6597912e+07
+# HELP go_threads Number of OS threads created.
+# TYPE go_threads gauge
+go_threads 39
+# HELP http_api_request_duration_seconds Time taken to respond to HTTP request
+# TYPE http_api_request_duration_seconds histogram
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="influxdb-client-go",le="0.005"} 1
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="influxdb-client-go",le="0.01"} 1
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="influxdb-client-go",le="0.025"} 1
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="influxdb-client-go",le="0.05"} 1
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="influxdb-client-go",le="0.1"} 1
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="influxdb-client-go",le="0.25"} 1
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="influxdb-client-go",le="0.5"} 1
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="influxdb-client-go",le="1"} 1
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="influxdb-client-go",le="2.5"} 1
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="influxdb-client-go",le="5"} 1
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="influxdb-client-go",le="10"} 1
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="influxdb-client-go",le="+Inf"} 1
+http_api_request_duration_seconds_sum{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="influxdb-client-go"} 5.3252e-05
+http_api_request_duration_seconds_count{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="influxdb-client-go"} 1
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="kube-probe",le="0.005"} 189
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="kube-probe",le="0.01"} 189
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="kube-probe",le="0.025"} 189
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="kube-probe",le="0.05"} 189
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="kube-probe",le="0.1"} 189
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="kube-probe",le="0.25"} 189
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="kube-probe",le="0.5"} 189
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="kube-probe",le="1"} 189
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="kube-probe",le="2.5"} 189
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="kube-probe",le="5"} 189
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="kube-probe",le="10"} 189
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="kube-probe",le="+Inf"} 189
+http_api_request_duration_seconds_sum{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="kube-probe"} 0.01334959200000001
+http_api_request_duration_seconds_count{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="kube-probe"} 189
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="Prometheus",le="0.005"} 47
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="Prometheus",le="0.01"} 47
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="Prometheus",le="0.025"} 47
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="Prometheus",le="0.05"} 47
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="Prometheus",le="0.1"} 47
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="Prometheus",le="0.25"} 47
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="Prometheus",le="0.5"} 47
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="Prometheus",le="1"} 47
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="Prometheus",le="2.5"} 47
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="Prometheus",le="5"} 47
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="Prometheus",le="10"} 47
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="Prometheus",le="+Inf"} 47
+http_api_request_duration_seconds_sum{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="Prometheus"} 0.059297138
+http_api_request_duration_seconds_count{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="Prometheus"} 47
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="WindowsPowerShell",le="0.005"} 4
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="WindowsPowerShell",le="0.01"} 4
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="WindowsPowerShell",le="0.025"} 4
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="WindowsPowerShell",le="0.05"} 4
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="WindowsPowerShell",le="0.1"} 4
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="WindowsPowerShell",le="0.25"} 4
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="WindowsPowerShell",le="0.5"} 4
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="WindowsPowerShell",le="1"} 4
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="WindowsPowerShell",le="2.5"} 4
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="WindowsPowerShell",le="5"} 4
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="WindowsPowerShell",le="10"} 4
+http_api_request_duration_seconds_bucket{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="WindowsPowerShell",le="+Inf"} 4
+http_api_request_duration_seconds_sum{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="WindowsPowerShell"} 0.005614215
+http_api_request_duration_seconds_count{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="WindowsPowerShell"} 4
+http_api_request_duration_seconds_bucket{handler="platform",method="POST",path="/api/v2/query",response_code="200",status="2XX",user_agent="influxdb-client-go",le="0.005"} 3
+http_api_request_duration_seconds_bucket{handler="platform",method="POST",path="/api/v2/query",response_code="200",status="2XX",user_agent="influxdb-client-go",le="0.01"} 9
+http_api_request_duration_seconds_bucket{handler="platform",method="POST",path="/api/v2/query",response_code="200",status="2XX",user_agent="influxdb-client-go",le="0.025"} 15
+http_api_request_duration_seconds_bucket{handler="platform",method="POST",path="/api/v2/query",response_code="200",status="2XX",user_agent="influxdb-client-go",le="0.05"} 15
+http_api_request_duration_seconds_bucket{handler="platform",method="POST",path="/api/v2/query",response_code="200",status="2XX",user_agent="influxdb-client-go",le="0.1"} 15
+http_api_request_duration_seconds_bucket{handler="platform",method="POST",path="/api/v2/query",response_code="200",status="2XX",user_agent="influxdb-client-go",le="0.25"} 15
+http_api_request_duration_seconds_bucket{handler="platform",method="POST",path="/api/v2/query",response_code="200",status="2XX",user_agent="influxdb-client-go",le="0.5"} 15
+http_api_request_duration_seconds_bucket{handler="platform",method="POST",path="/api/v2/query",response_code="200",status="2XX",user_agent="influxdb-client-go",le="1"} 15
+http_api_request_duration_seconds_bucket{handler="platform",method="POST",path="/api/v2/query",response_code="200",status="2XX",user_agent="influxdb-client-go",le="2.5"} 15
+http_api_request_duration_seconds_bucket{handler="platform",method="POST",path="/api/v2/query",response_code="200",status="2XX",user_agent="influxdb-client-go",le="5"} 15
+http_api_request_duration_seconds_bucket{handler="platform",method="POST",path="/api/v2/query",response_code="200",status="2XX",user_agent="influxdb-client-go",le="10"} 15
+http_api_request_duration_seconds_bucket{handler="platform",method="POST",path="/api/v2/query",response_code="200",status="2XX",user_agent="influxdb-client-go",le="+Inf"} 15
+http_api_request_duration_seconds_sum{handler="platform",method="POST",path="/api/v2/query",response_code="200",status="2XX",user_agent="influxdb-client-go"} 0.134701427
+http_api_request_duration_seconds_count{handler="platform",method="POST",path="/api/v2/query",response_code="200",status="2XX",user_agent="influxdb-client-go"} 15
+# HELP http_api_requests_total Number of http requests received
+# TYPE http_api_requests_total counter
+http_api_requests_total{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="influxdb-client-go"} 1
+http_api_requests_total{handler="platform",method="GET",path="/health",response_code="200",status="2XX",user_agent="kube-probe"} 189
+http_api_requests_total{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="Prometheus"} 47
+http_api_requests_total{handler="platform",method="GET",path="/metrics",response_code="200",status="2XX",user_agent="WindowsPowerShell"} 4
+http_api_requests_total{handler="platform",method="POST",path="/api/v2/query",response_code="200",status="2XX",user_agent="influxdb-client-go"} 15
+# HELP http_query_request_bytes Count of bytes received
+# TYPE http_query_request_bytes counter
+http_query_request_bytes{endpoint="/api/v2/query",org_id="d5ad034ad69e3796",status="200"} 5263
+# HELP http_query_request_count Total number of query requests
+# TYPE http_query_request_count counter
+http_query_request_count{endpoint="/api/v2/query",org_id="d5ad034ad69e3796",status="200"} 15
+# HELP http_query_response_bytes Count of bytes returned
+# TYPE http_query_response_bytes counter
+http_query_response_bytes{endpoint="/api/v2/query",org_id="d5ad034ad69e3796",status="200"} 4.576646e+06
+# HELP influxdb_buckets_total Number of total buckets on the server
+# TYPE influxdb_buckets_total counter
+influxdb_buckets_total 3
+# HELP influxdb_dashboards_total Number of total dashboards on the server
+# TYPE influxdb_dashboards_total counter
+influxdb_dashboards_total 0
+# HELP influxdb_info Information about the influxdb environment.
+# TYPE influxdb_info gauge
+influxdb_info{arch="amd64",build_date="2025-05-20T22:48:39Z",commit="ec9dcde5d6",cpus="16",os="linux",version="v2.7.12"} 1
+# HELP influxdb_organizations_total Number of total organizations on the server
+# TYPE influxdb_organizations_total counter
+influxdb_organizations_total 1
+# HELP influxdb_remotes_total Number of total remote connections configured on the server
+# TYPE influxdb_remotes_total counter
+influxdb_remotes_total 0
+# HELP influxdb_replications_total Number of total replication configurations on the server
+# TYPE influxdb_replications_total counter
+influxdb_replications_total 0
+# HELP influxdb_scrapers_total Number of total scrapers on the server
+# TYPE influxdb_scrapers_total counter
+influxdb_scrapers_total 0
+# HELP influxdb_telegrafs_total Number of total telegraf configurations on the server
+# TYPE influxdb_telegrafs_total counter
+influxdb_telegrafs_total 0
+# HELP influxdb_tokens_total Number of total tokens on the server
+# TYPE influxdb_tokens_total counter
+influxdb_tokens_total 1
+# HELP influxdb_uptime_seconds influxdb process uptime in seconds
+# TYPE influxdb_uptime_seconds gauge
+influxdb_uptime_seconds{id="103fc87a9c29b000"} 711.563849889
+# HELP influxdb_users_total Number of total users on the server
+# TYPE influxdb_users_total counter
+influxdb_users_total 1
+# HELP qc_all_active Number of queries in all states
+# TYPE qc_all_active gauge
+qc_all_active{org="d5ad034ad69e3796"} 0
+# HELP qc_all_duration_seconds Histogram of total times spent in all query states
+# TYPE qc_all_duration_seconds histogram
+qc_all_duration_seconds_bucket{org="d5ad034ad69e3796",le="0.001"} 0
+qc_all_duration_seconds_bucket{org="d5ad034ad69e3796",le="0.005"} 5
+qc_all_duration_seconds_bucket{org="d5ad034ad69e3796",le="0.025"} 15
+qc_all_duration_seconds_bucket{org="d5ad034ad69e3796",le="0.125"} 15
+qc_all_duration_seconds_bucket{org="d5ad034ad69e3796",le="0.625"} 15
+qc_all_duration_seconds_bucket{org="d5ad034ad69e3796",le="3.125"} 15
+qc_all_duration_seconds_bucket{org="d5ad034ad69e3796",le="15.625"} 15
+qc_all_duration_seconds_bucket{org="d5ad034ad69e3796",le="+Inf"} 15
+qc_all_duration_seconds_sum{org="d5ad034ad69e3796"} 0.12875609899999998
+qc_all_duration_seconds_count{org="d5ad034ad69e3796"} 15
+# HELP qc_compiling_active Number of queries actively compiling
+# TYPE qc_compiling_active gauge
+qc_compiling_active{compiler_type="flux",org="d5ad034ad69e3796"} 0
+# HELP qc_compiling_duration_seconds Histogram of times spent compiling queries
+# TYPE qc_compiling_duration_seconds histogram
+qc_compiling_duration_seconds_bucket{compiler_type="flux",org="d5ad034ad69e3796",le="0.001"} 13
+qc_compiling_duration_seconds_bucket{compiler_type="flux",org="d5ad034ad69e3796",le="0.005"} 15
+qc_compiling_duration_seconds_bucket{compiler_type="flux",org="d5ad034ad69e3796",le="0.025"} 15
+qc_compiling_duration_seconds_bucket{compiler_type="flux",org="d5ad034ad69e3796",le="0.125"} 15
+qc_compiling_duration_seconds_bucket{compiler_type="flux",org="d5ad034ad69e3796",le="0.625"} 15
+qc_compiling_duration_seconds_bucket{compiler_type="flux",org="d5ad034ad69e3796",le="3.125"} 15
+qc_compiling_duration_seconds_bucket{compiler_type="flux",org="d5ad034ad69e3796",le="15.625"} 15
+qc_compiling_duration_seconds_bucket{compiler_type="flux",org="d5ad034ad69e3796",le="+Inf"} 15
+qc_compiling_duration_seconds_sum{compiler_type="flux",org="d5ad034ad69e3796"} 0.005876256
+qc_compiling_duration_seconds_count{compiler_type="flux",org="d5ad034ad69e3796"} 15
+# HELP qc_executing_active Number of queries actively executing
+# TYPE qc_executing_active gauge
+qc_executing_active{org="d5ad034ad69e3796"} 0
+# HELP qc_executing_duration_seconds Histogram of times spent executing queries
+# TYPE qc_executing_duration_seconds histogram
+qc_executing_duration_seconds_bucket{org="d5ad034ad69e3796",le="0.001"} 0
+qc_executing_duration_seconds_bucket{org="d5ad034ad69e3796",le="0.005"} 8
+qc_executing_duration_seconds_bucket{org="d5ad034ad69e3796",le="0.025"} 15
+qc_executing_duration_seconds_bucket{org="d5ad034ad69e3796",le="0.125"} 15
+qc_executing_duration_seconds_bucket{org="d5ad034ad69e3796",le="0.625"} 15
+qc_executing_duration_seconds_bucket{org="d5ad034ad69e3796",le="3.125"} 15
+qc_executing_duration_seconds_bucket{org="d5ad034ad69e3796",le="15.625"} 15
+qc_executing_duration_seconds_bucket{org="d5ad034ad69e3796",le="+Inf"} 15
+qc_executing_duration_seconds_sum{org="d5ad034ad69e3796"} 0.12214400100000003
+qc_executing_duration_seconds_count{org="d5ad034ad69e3796"} 15
+# HELP qc_memory_unused_bytes The free memory as seen by the internal memory manager
+# TYPE qc_memory_unused_bytes gauge
+qc_memory_unused_bytes{org="d5ad034ad69e3796"} 0
+# HELP qc_queueing_active Number of queries actively queueing
+# TYPE qc_queueing_active gauge
+qc_queueing_active{org="d5ad034ad69e3796"} 0
+# HELP qc_queueing_duration_seconds Histogram of times spent queueing queries
+# TYPE qc_queueing_duration_seconds histogram
+qc_queueing_duration_seconds_bucket{org="d5ad034ad69e3796",le="0.001"} 15
+qc_queueing_duration_seconds_bucket{org="d5ad034ad69e3796",le="0.005"} 15
+qc_queueing_duration_seconds_bucket{org="d5ad034ad69e3796",le="0.025"} 15
+qc_queueing_duration_seconds_bucket{org="d5ad034ad69e3796",le="0.125"} 15
+qc_queueing_duration_seconds_bucket{org="d5ad034ad69e3796",le="0.625"} 15
+qc_queueing_duration_seconds_bucket{org="d5ad034ad69e3796",le="3.125"} 15
+qc_queueing_duration_seconds_bucket{org="d5ad034ad69e3796",le="15.625"} 15
+qc_queueing_duration_seconds_bucket{org="d5ad034ad69e3796",le="+Inf"} 15
+qc_queueing_duration_seconds_sum{org="d5ad034ad69e3796"} 0.00040299600000000003
+qc_queueing_duration_seconds_count{org="d5ad034ad69e3796"} 15
+# HELP qc_requests_total Count of the query requests
+# TYPE qc_requests_total counter
+qc_requests_total{org="d5ad034ad69e3796",result="success"} 15
+# HELP query_influxdb_source_read_request_duration_seconds Histogram of times spent in read requests
+# TYPE query_influxdb_source_read_request_duration_seconds histogram
+query_influxdb_source_read_request_duration_seconds_bucket{op="readFilter",org="d5ad034ad69e3796",le="0.001"} 5
+query_influxdb_source_read_request_duration_seconds_bucket{op="readFilter",org="d5ad034ad69e3796",le="0.005"} 6
+query_influxdb_source_read_request_duration_seconds_bucket{op="readFilter",org="d5ad034ad69e3796",le="0.025"} 6
+query_influxdb_source_read_request_duration_seconds_bucket{op="readFilter",org="d5ad034ad69e3796",le="0.125"} 6
+query_influxdb_source_read_request_duration_seconds_bucket{op="readFilter",org="d5ad034ad69e3796",le="0.625"} 6
+query_influxdb_source_read_request_duration_seconds_bucket{op="readFilter",org="d5ad034ad69e3796",le="3.125"} 6
+query_influxdb_source_read_request_duration_seconds_bucket{op="readFilter",org="d5ad034ad69e3796",le="15.625"} 6
+query_influxdb_source_read_request_duration_seconds_bucket{op="readFilter",org="d5ad034ad69e3796",le="+Inf"} 6
+query_influxdb_source_read_request_duration_seconds_sum{op="readFilter",org="d5ad034ad69e3796"} 0.005963362
+query_influxdb_source_read_request_duration_seconds_count{op="readFilter",org="d5ad034ad69e3796"} 6
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(count)",org="d5ad034ad69e3796",le="0.001"} 1
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(count)",org="d5ad034ad69e3796",le="0.005"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(count)",org="d5ad034ad69e3796",le="0.025"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(count)",org="d5ad034ad69e3796",le="0.125"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(count)",org="d5ad034ad69e3796",le="0.625"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(count)",org="d5ad034ad69e3796",le="3.125"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(count)",org="d5ad034ad69e3796",le="15.625"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(count)",org="d5ad034ad69e3796",le="+Inf"} 3
+query_influxdb_source_read_request_duration_seconds_sum{op="readWindow(count)",org="d5ad034ad69e3796"} 0.0028422739999999997
+query_influxdb_source_read_request_duration_seconds_count{op="readWindow(count)",org="d5ad034ad69e3796"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(first)",org="d5ad034ad69e3796",le="0.001"} 2
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(first)",org="d5ad034ad69e3796",le="0.005"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(first)",org="d5ad034ad69e3796",le="0.025"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(first)",org="d5ad034ad69e3796",le="0.125"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(first)",org="d5ad034ad69e3796",le="0.625"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(first)",org="d5ad034ad69e3796",le="3.125"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(first)",org="d5ad034ad69e3796",le="15.625"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(first)",org="d5ad034ad69e3796",le="+Inf"} 3
+query_influxdb_source_read_request_duration_seconds_sum{op="readWindow(first)",org="d5ad034ad69e3796"} 0.0029345680000000002
+query_influxdb_source_read_request_duration_seconds_count{op="readWindow(first)",org="d5ad034ad69e3796"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(last)",org="d5ad034ad69e3796",le="0.001"} 0
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(last)",org="d5ad034ad69e3796",le="0.005"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(last)",org="d5ad034ad69e3796",le="0.025"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(last)",org="d5ad034ad69e3796",le="0.125"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(last)",org="d5ad034ad69e3796",le="0.625"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(last)",org="d5ad034ad69e3796",le="3.125"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(last)",org="d5ad034ad69e3796",le="15.625"} 3
+query_influxdb_source_read_request_duration_seconds_bucket{op="readWindow(last)",org="d5ad034ad69e3796",le="+Inf"} 3
+query_influxdb_source_read_request_duration_seconds_sum{op="readWindow(last)",org="d5ad034ad69e3796"} 0.004294933
+query_influxdb_source_read_request_duration_seconds_count{op="readWindow(last)",org="d5ad034ad69e3796"} 3
+# HELP service_bucket_new_call_total Number of calls
+# TYPE service_bucket_new_call_total counter
+service_bucket_new_call_total{method="find_bucket"} 15
+service_bucket_new_call_total{method="find_buckets"} 1
+# HELP service_bucket_new_duration Duration of calls
+# TYPE service_bucket_new_duration histogram
+service_bucket_new_duration_bucket{method="find_bucket",le="0.005"} 15
+service_bucket_new_duration_bucket{method="find_bucket",le="0.01"} 15
+service_bucket_new_duration_bucket{method="find_bucket",le="0.025"} 15
+service_bucket_new_duration_bucket{method="find_bucket",le="0.05"} 15
+service_bucket_new_duration_bucket{method="find_bucket",le="0.1"} 15
+service_bucket_new_duration_bucket{method="find_bucket",le="0.25"} 15
+service_bucket_new_duration_bucket{method="find_bucket",le="0.5"} 15
+service_bucket_new_duration_bucket{method="find_bucket",le="1"} 15
+service_bucket_new_duration_bucket{method="find_bucket",le="2.5"} 15
+service_bucket_new_duration_bucket{method="find_bucket",le="5"} 15
+service_bucket_new_duration_bucket{method="find_bucket",le="10"} 15
+service_bucket_new_duration_bucket{method="find_bucket",le="+Inf"} 15
+service_bucket_new_duration_sum{method="find_bucket"} 0.000382436
+service_bucket_new_duration_count{method="find_bucket"} 15
+service_bucket_new_duration_bucket{method="find_buckets",le="0.005"} 1
+service_bucket_new_duration_bucket{method="find_buckets",le="0.01"} 1
+service_bucket_new_duration_bucket{method="find_buckets",le="0.025"} 1
+service_bucket_new_duration_bucket{method="find_buckets",le="0.05"} 1
+service_bucket_new_duration_bucket{method="find_buckets",le="0.1"} 1
+service_bucket_new_duration_bucket{method="find_buckets",le="0.25"} 1
+service_bucket_new_duration_bucket{method="find_buckets",le="0.5"} 1
+service_bucket_new_duration_bucket{method="find_buckets",le="1"} 1
+service_bucket_new_duration_bucket{method="find_buckets",le="2.5"} 1
+service_bucket_new_duration_bucket{method="find_buckets",le="5"} 1
+service_bucket_new_duration_bucket{method="find_buckets",le="10"} 1
+service_bucket_new_duration_bucket{method="find_buckets",le="+Inf"} 1
+service_bucket_new_duration_sum{method="find_buckets"} 0.000826889
+service_bucket_new_duration_count{method="find_buckets"} 1
+# HELP service_org_new_call_total Number of calls
+# TYPE service_org_new_call_total counter
+service_org_new_call_total{method="find_org"} 15
+# HELP service_org_new_duration Duration of calls
+# TYPE service_org_new_duration histogram
+service_org_new_duration_bucket{method="find_org",le="0.005"} 15
+service_org_new_duration_bucket{method="find_org",le="0.01"} 15
+service_org_new_duration_bucket{method="find_org",le="0.025"} 15
+service_org_new_duration_bucket{method="find_org",le="0.05"} 15
+service_org_new_duration_bucket{method="find_org",le="0.1"} 15
+service_org_new_duration_bucket{method="find_org",le="0.25"} 15
+service_org_new_duration_bucket{method="find_org",le="0.5"} 15
+service_org_new_duration_bucket{method="find_org",le="1"} 15
+service_org_new_duration_bucket{method="find_org",le="2.5"} 15
+service_org_new_duration_bucket{method="find_org",le="5"} 15
+service_org_new_duration_bucket{method="find_org",le="10"} 15
+service_org_new_duration_bucket{method="find_org",le="+Inf"} 15
+service_org_new_duration_sum{method="find_org"} 0.00038522500000000005
+service_org_new_duration_count{method="find_org"} 15
+# HELP service_user_new_call_total Number of calls
+# TYPE service_user_new_call_total counter
+service_user_new_call_total{method="find_user_by_id"} 15
+# HELP service_user_new_duration Duration of calls
+# TYPE service_user_new_duration histogram
+service_user_new_duration_bucket{method="find_user_by_id",le="0.005"} 15
+service_user_new_duration_bucket{method="find_user_by_id",le="0.01"} 15
+service_user_new_duration_bucket{method="find_user_by_id",le="0.025"} 15
+service_user_new_duration_bucket{method="find_user_by_id",le="0.05"} 15
+service_user_new_duration_bucket{method="find_user_by_id",le="0.1"} 15
+service_user_new_duration_bucket{method="find_user_by_id",le="0.25"} 15
+service_user_new_duration_bucket{method="find_user_by_id",le="0.5"} 15
+service_user_new_duration_bucket{method="find_user_by_id",le="1"} 15
+service_user_new_duration_bucket{method="find_user_by_id",le="2.5"} 15
+service_user_new_duration_bucket{method="find_user_by_id",le="5"} 15
+service_user_new_duration_bucket{method="find_user_by_id",le="10"} 15
+service_user_new_duration_bucket{method="find_user_by_id",le="+Inf"} 15
+service_user_new_duration_sum{method="find_user_by_id"} 0.00024231399999999998
+service_user_new_duration_count{method="find_user_by_id"} 15
+# HELP storage_bucket_measurement_num Gauge of measurement cardinality per bucket
+# TYPE storage_bucket_measurement_num gauge
+storage_bucket_measurement_num{bucket="f52b519cfd31bf81"} 1
+# HELP storage_bucket_series_num Gauge of series cardinality per bucket
+# TYPE storage_bucket_series_num gauge
+storage_bucket_series_num{bucket="f52b519cfd31bf81"} 5
+# HELP storage_cache_disk_bytes Gauge of size of most recent snapshot
+# TYPE storage_cache_disk_bytes gauge
+storage_cache_disk_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 0
+storage_cache_disk_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 0
+storage_cache_disk_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 0
+storage_cache_disk_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 0
+storage_cache_disk_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 0
+storage_cache_disk_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 0
+# HELP storage_cache_inuse_bytes Gauge of current memory consumption of cache
+# TYPE storage_cache_inuse_bytes gauge
+storage_cache_inuse_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 0
+storage_cache_inuse_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 0
+storage_cache_inuse_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 0
+storage_cache_inuse_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 0
+storage_cache_inuse_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 0
+storage_cache_inuse_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 0
+# HELP storage_cache_latest_snapshot Unix time of most recent snapshot
+# TYPE storage_cache_latest_snapshot gauge
+storage_cache_latest_snapshot{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 1.77127552062352e+09
+storage_cache_latest_snapshot{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 1.7712755207201557e+09
+storage_cache_latest_snapshot{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 1.7712755207256317e+09
+storage_cache_latest_snapshot{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 1.771275520724677e+09
+storage_cache_latest_snapshot{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 1.7712755207184575e+09
+storage_cache_latest_snapshot{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 1.7712755206345823e+09
+# HELP storage_cache_writes_dropped Counter of writes to cache with some dropped points
+# TYPE storage_cache_writes_dropped counter
+storage_cache_writes_dropped{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 0
+storage_cache_writes_dropped{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 0
+storage_cache_writes_dropped{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 0
+storage_cache_writes_dropped{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 0
+storage_cache_writes_dropped{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 0
+storage_cache_writes_dropped{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 0
+# HELP storage_cache_writes_err Counter of failed writes to cache
+# TYPE storage_cache_writes_err counter
+storage_cache_writes_err{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 0
+storage_cache_writes_err{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 0
+storage_cache_writes_err{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 0
+storage_cache_writes_err{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 0
+storage_cache_writes_err{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 0
+storage_cache_writes_err{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 0
+# HELP storage_cache_writes_total Counter of all writes to cache
+# TYPE storage_cache_writes_total counter
+storage_cache_writes_total{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 0
+storage_cache_writes_total{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 0
+storage_cache_writes_total{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 0
+storage_cache_writes_total{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 0
+storage_cache_writes_total{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 0
+storage_cache_writes_total{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 0
+# HELP storage_retention_check_duration Histogram of duration of retention check (in seconds)
+# TYPE storage_retention_check_duration histogram
+storage_retention_check_duration_bucket{le="0.005"} 0
+storage_retention_check_duration_bucket{le="0.01"} 0
+storage_retention_check_duration_bucket{le="0.025"} 0
+storage_retention_check_duration_bucket{le="0.05"} 0
+storage_retention_check_duration_bucket{le="0.1"} 0
+storage_retention_check_duration_bucket{le="0.25"} 0
+storage_retention_check_duration_bucket{le="0.5"} 0
+storage_retention_check_duration_bucket{le="1"} 0
+storage_retention_check_duration_bucket{le="2.5"} 0
+storage_retention_check_duration_bucket{le="5"} 0
+storage_retention_check_duration_bucket{le="10"} 0
+storage_retention_check_duration_bucket{le="+Inf"} 0
+storage_retention_check_duration_sum 0
+storage_retention_check_duration_count 0
+# HELP storage_shard_disk_size Gauge of the disk size for the shard
+# TYPE storage_shard_disk_size gauge
+storage_shard_disk_size{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 124336
+storage_shard_disk_size{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 107674
+storage_shard_disk_size{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 253332
+storage_shard_disk_size{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 155651
+storage_shard_disk_size{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 80293
+storage_shard_disk_size{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 256058
+# HELP storage_shard_fields_created Counter of the number of fields created
+# TYPE storage_shard_fields_created counter
+storage_shard_fields_created{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 0
+storage_shard_fields_created{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 0
+storage_shard_fields_created{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 0
+storage_shard_fields_created{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 0
+storage_shard_fields_created{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 0
+storage_shard_fields_created{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 0
+# HELP storage_shard_series Gauge of the number of series in the shard index
+# TYPE storage_shard_series gauge
+storage_shard_series{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 5
+storage_shard_series{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 5
+storage_shard_series{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 5
+storage_shard_series{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 5
+storage_shard_series{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 5
+storage_shard_series{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 5
+# HELP storage_shard_write_count Count of the number of write requests
+# TYPE storage_shard_write_count counter
+storage_shard_write_count{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 0
+storage_shard_write_count{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 0
+storage_shard_write_count{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 0
+storage_shard_write_count{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 0
+storage_shard_write_count{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 0
+storage_shard_write_count{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 0
+# HELP storage_shard_write_dropped_sum Counter of the number of points droppped
+# TYPE storage_shard_write_dropped_sum counter
+storage_shard_write_dropped_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 0
+storage_shard_write_dropped_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 0
+storage_shard_write_dropped_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 0
+storage_shard_write_dropped_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 0
+storage_shard_write_dropped_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 0
+storage_shard_write_dropped_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 0
+# HELP storage_shard_write_err_count Count of the number of write requests with errors
+# TYPE storage_shard_write_err_count counter
+storage_shard_write_err_count{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 0
+storage_shard_write_err_count{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 0
+storage_shard_write_err_count{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 0
+storage_shard_write_err_count{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 0
+storage_shard_write_err_count{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 0
+storage_shard_write_err_count{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 0
+# HELP storage_shard_write_err_sum Counter of the number of points for write requests with errors
+# TYPE storage_shard_write_err_sum counter
+storage_shard_write_err_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 0
+storage_shard_write_err_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 0
+storage_shard_write_err_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 0
+storage_shard_write_err_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 0
+storage_shard_write_err_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 0
+storage_shard_write_err_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 0
+# HELP storage_shard_write_sum Counter of the number of points for write requests
+# TYPE storage_shard_write_sum counter
+storage_shard_write_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 0
+storage_shard_write_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 0
+storage_shard_write_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 0
+storage_shard_write_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 0
+storage_shard_write_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 0
+storage_shard_write_sum{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 0
+# HELP storage_tsm_files_disk_bytes Gauge of data size in bytes for each shard
+# TYPE storage_tsm_files_disk_bytes gauge
+storage_tsm_files_disk_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 124336
+storage_tsm_files_disk_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 107674
+storage_tsm_files_disk_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 253332
+storage_tsm_files_disk_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 155651
+storage_tsm_files_disk_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 80293
+storage_tsm_files_disk_bytes{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 256058
+# HELP storage_tsm_files_total Gauge of number of files per shard
+# TYPE storage_tsm_files_total gauge
+storage_tsm_files_total{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 1
+storage_tsm_files_total{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 1
+storage_tsm_files_total{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 1
+storage_tsm_files_total{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 1
+storage_tsm_files_total{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 1
+storage_tsm_files_total{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 1
+# HELP storage_wal_size Gauge of size of WAL in bytes
+# TYPE storage_wal_size gauge
+storage_wal_size{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 0
+storage_wal_size{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 0
+storage_wal_size{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 0
+storage_wal_size{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 0
+storage_wal_size{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 0
+storage_wal_size{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 0
+# HELP storage_wal_writes Number of write attempts to the WAL
+# TYPE storage_wal_writes counter
+storage_wal_writes{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 0
+storage_wal_writes{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 0
+storage_wal_writes{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 0
+storage_wal_writes{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 0
+storage_wal_writes{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 0
+storage_wal_writes{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 0
+# HELP storage_wal_writes_err Number of failed write attempts to the WAL
+# TYPE storage_wal_writes_err counter
+storage_wal_writes_err{bucket="f52b519cfd31bf81",engine="tsm1",id="10",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/10",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/10"} 0
+storage_wal_writes_err{bucket="f52b519cfd31bf81",engine="tsm1",id="11",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/11",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/11"} 0
+storage_wal_writes_err{bucket="f52b519cfd31bf81",engine="tsm1",id="12",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/12",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/12"} 0
+storage_wal_writes_err{bucket="f52b519cfd31bf81",engine="tsm1",id="13",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/13",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/13"} 0
+storage_wal_writes_err{bucket="f52b519cfd31bf81",engine="tsm1",id="14",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/14",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/14"} 0
+storage_wal_writes_err{bucket="f52b519cfd31bf81",engine="tsm1",id="9",path="/var/lib/influxdb2/engine/data/f52b519cfd31bf81/autogen/9",walPath="/var/lib/influxdb2/engine/wal/f52b519cfd31bf81/autogen/9"} 0
+# HELP storage_writer_dropped_points Histogram of number of points dropped due to partial writes
+# TYPE storage_writer_dropped_points histogram
+storage_writer_dropped_points_bucket{path="/var/lib/influxdb2/engine",le="10"} 0
+storage_writer_dropped_points_bucket{path="/var/lib/influxdb2/engine",le="100"} 0
+storage_writer_dropped_points_bucket{path="/var/lib/influxdb2/engine",le="1000"} 0
+storage_writer_dropped_points_bucket{path="/var/lib/influxdb2/engine",le="10000"} 0
+storage_writer_dropped_points_bucket{path="/var/lib/influxdb2/engine",le="100000"} 0
+storage_writer_dropped_points_bucket{path="/var/lib/influxdb2/engine",le="+Inf"} 0
+storage_writer_dropped_points_sum{path="/var/lib/influxdb2/engine"} 0
+storage_writer_dropped_points_count{path="/var/lib/influxdb2/engine"} 0
+# HELP storage_writer_err_points Histogram of number of points in errored shard write requests
+# TYPE storage_writer_err_points histogram
+storage_writer_err_points_bucket{path="/var/lib/influxdb2/engine",le="10"} 0
+storage_writer_err_points_bucket{path="/var/lib/influxdb2/engine",le="100"} 0
+storage_writer_err_points_bucket{path="/var/lib/influxdb2/engine",le="1000"} 0
+storage_writer_err_points_bucket{path="/var/lib/influxdb2/engine",le="10000"} 0
+storage_writer_err_points_bucket{path="/var/lib/influxdb2/engine",le="100000"} 0
+storage_writer_err_points_bucket{path="/var/lib/influxdb2/engine",le="+Inf"} 0
+storage_writer_err_points_sum{path="/var/lib/influxdb2/engine"} 0
+storage_writer_err_points_count{path="/var/lib/influxdb2/engine"} 0
+# HELP storage_writer_ok_points Histogram of number of points in successful shard write requests
+# TYPE storage_writer_ok_points histogram
+storage_writer_ok_points_bucket{path="/var/lib/influxdb2/engine",le="10"} 0
+storage_writer_ok_points_bucket{path="/var/lib/influxdb2/engine",le="100"} 0
+storage_writer_ok_points_bucket{path="/var/lib/influxdb2/engine",le="1000"} 0
+storage_writer_ok_points_bucket{path="/var/lib/influxdb2/engine",le="10000"} 0
+storage_writer_ok_points_bucket{path="/var/lib/influxdb2/engine",le="100000"} 0
+storage_writer_ok_points_bucket{path="/var/lib/influxdb2/engine",le="+Inf"} 0
+storage_writer_ok_points_sum{path="/var/lib/influxdb2/engine"} 0
+storage_writer_ok_points_count{path="/var/lib/influxdb2/engine"} 0
+# HELP storage_writer_req_points Histogram of number of points requested to be written
+# TYPE storage_writer_req_points histogram
+storage_writer_req_points_bucket{path="/var/lib/influxdb2/engine",le="10"} 0
+storage_writer_req_points_bucket{path="/var/lib/influxdb2/engine",le="100"} 0
+storage_writer_req_points_bucket{path="/var/lib/influxdb2/engine",le="1000"} 0
+storage_writer_req_points_bucket{path="/var/lib/influxdb2/engine",le="10000"} 0
+storage_writer_req_points_bucket{path="/var/lib/influxdb2/engine",le="100000"} 0
+storage_writer_req_points_bucket{path="/var/lib/influxdb2/engine",le="+Inf"} 0
+storage_writer_req_points_sum{path="/var/lib/influxdb2/engine"} 0
+storage_writer_req_points_count{path="/var/lib/influxdb2/engine"} 0
+# HELP storage_writer_timeouts Number of shard write request timeouts
+# TYPE storage_writer_timeouts counter
+storage_writer_timeouts{path="/var/lib/influxdb2/engine"} 0
+# HELP task_executor_promise_queue_usage Percent of the promise queue that is currently full
+# TYPE task_executor_promise_queue_usage gauge
+task_executor_promise_queue_usage 0
+# HELP task_executor_total_runs_active Total number of workers currently running tasks
+# TYPE task_executor_total_runs_active gauge
+task_executor_total_runs_active 0
+# HELP task_executor_workers_busy Percent of total available workers that are currently busy
+# TYPE task_executor_workers_busy gauge
+task_executor_workers_busy 0
+# HELP task_scheduler_current_execution Number of tasks currently being executed
+# TYPE task_scheduler_current_execution gauge
+task_scheduler_current_execution 128
+# HELP task_scheduler_execute_delta The duration in seconds between a run starting and finishing.
+# TYPE task_scheduler_execute_delta summary
+task_scheduler_execute_delta{quantile="0.5"} NaN
+task_scheduler_execute_delta{quantile="0.9"} NaN
+task_scheduler_execute_delta{quantile="0.99"} NaN
+task_scheduler_execute_delta_sum 0
+task_scheduler_execute_delta_count 0
+# HELP task_scheduler_schedule_delay The duration between when a Item should be scheduled and when it is told to execute.
+# TYPE task_scheduler_schedule_delay summary
+task_scheduler_schedule_delay{quantile="0.5"} NaN
+task_scheduler_schedule_delay{quantile="0.9"} NaN
+task_scheduler_schedule_delay{quantile="0.99"} NaN
+task_scheduler_schedule_delay_sum 0
+task_scheduler_schedule_delay_count 0
+# HELP task_scheduler_total_execute_failure Total number of times an execution has failed.
+# TYPE task_scheduler_total_execute_failure counter
+task_scheduler_total_execute_failure 0
+# HELP task_scheduler_total_execution_calls Total number of executions across all tasks.
+# TYPE task_scheduler_total_execution_calls counter
+task_scheduler_total_execution_calls 0
+# HELP task_scheduler_total_release_calls Total number of release requests.
+# TYPE task_scheduler_total_release_calls counter
+task_scheduler_total_release_calls 0
+# HELP task_scheduler_total_schedule_calls Total number of schedule requests.
+# TYPE task_scheduler_total_schedule_calls counter
+task_scheduler_total_schedule_calls 0
+# HELP task_scheduler_total_schedule_fails Total number of schedule requests that fail to schedule.
+# TYPE task_scheduler_total_schedule_fails counter
+task_scheduler_total_schedule_fails 0
+

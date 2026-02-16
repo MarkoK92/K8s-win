@@ -190,8 +190,8 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "sum(storage_shard_disk_size)",
-                    "legendFormat": "InfluxDB Size"
+                    "expr": "sum(storage_shard_disk_size) + sum(storage_wal_size)",
+                    "legendFormat": "InfluxDB Size (TSM + WAL)"
                 }
             ],
             "fieldConfig": {
