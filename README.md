@@ -414,7 +414,7 @@ This matters when sending millions of price updates per second!
 
 ## Services & Ports
 
-| Service | Type | Port | Ingress Path | Purpose |
+| Service | Type | Port |  Path | Purpose |
 |---------|------|------|-------------|---------|
 | `nats-service` | ClusterIP | 4222 | — | Internal NATS communication |
 | `nats-gateway-service` | ClusterIP | 8080 | `/ws` | Browser WebSocket (via Ingress) |
@@ -1526,7 +1526,53 @@ We use **Grafana + Prometheus** to keep an eye on the cluster. Access Grafana at
 - **Check URL:** In `charts/monitoring/values.yaml`, the URL is `http://influxdb-service.default.svc.cluster.local:8086`. If you deployed InfluxDB to a different namespace, update this.
 - **Check Token:** The token in `values.yaml` must match the one in `charts/influxdb/values.yaml`.
 
+#### 4. `kubelet_volume_stats` Shows Wrong Disk Usage
+
+If your Grafana dashboard shows InfluxDB using **~19 GB** but `kubectl exec <pod> -- du -sh /var/lib/influxdb2` shows **1.9 MB**, the cause is the `local-path` storage provisioner. `kubelet_volume_stats_used_bytes` reports the entire host partition usage, not the specific directory. **Fix:** Use InfluxDB's own metrics: `sum(storage_shard_disk_size) + sum(storage_wal_size)`. This requires a `ServiceMonitor` to enable Prometheus scraping of InfluxDB's `/metrics` endpoint.
+
+#### 5. Argo CD "connection refused" — Repo Server Crash Loop
+
+If Argo CD can't sync with `dial tcp <IP>:8081: connect: connection refused`, check the `argocd-repo-server` pod:
+```bash
+kubectl get pods -n argocd -l app.kubernetes.io/name=argocd-repo-server
+kubectl logs -n argocd -l app.kubernetes.io/name=argocd-repo-server --all-containers=true
+```
+We hit this because the `copyutil` init container failed on a stale socket file (`File exists`). **Fix:** Delete the pod to force a clean restart:
+```bash
+kubectl delete pod -n argocd -l app.kubernetes.io/name=argocd-repo-server
+```
+**Lesson:** Always check **all containers** (including init containers) — not just the main one.
+
+#### 6. OOM Kills and CrashLoopBackOff
+
+If pods keep restarting, check for `OOMKilled`:
+```bash
+kubectl describe pod <pod-name>    # Look for "Last State: Terminated, Reason: OOMKilled"
+```
+The pod exceeds its `resources.limits.memory` and the kernel kills it. Kubernetes restarts it, it gets killed again → `CrashLoopBackOff`. **Fix:** Increase memory limits in `values.yaml`. Our API container needed higher limits because `go run` compiles code in-memory at startup.
+
+**Key insight:** `CrashLoopBackOff` is a **symptom**, not a diagnosis. The actual cause could be OOM, a missing config, a failed dependency, or a bug.
+
+#### 7. Metrics Exist but Don't Show in Prometheus
+
+If a metric is available at a service's `/metrics` endpoint but Prometheus doesn't have it, you're missing a `ServiceMonitor`. The `kube-prometheus-stack` uses `ServiceMonitor` resources to discover scrape targets. Without one, Prometheus ignores the service:
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    release: monitoring     # Must match Prometheus Operator's selector
+spec:
+  selector:
+    matchLabels:
+      app: influxdb
+  endpoints:
+  - port: http
+    path: /metrics
+```
+
 ---
+
 
 ## Production Alternatives
 
@@ -1619,3 +1665,353 @@ lifecycle:
 ```
 This 5-second delay gives the Service time to remove the pod from its endpoint list *before* the process actually shuts down. Result: **zero dropped requests** during deployments.
 
+---
+
+## Production Considerations
+
+These are things we intentionally **did not implement** (a single-user k3s cluster doesn't need them), but you **must** know for real-world Kubernetes.
+
+### 1. Namespaces & RBAC (Role-Based Access Control)
+
+**What we did:** Everything runs in the `default` namespace (except Argo CD and monitoring which have their own).
+
+**What production looks like:** Workloads are isolated by namespace — each team or environment gets its own:
+
+```
+kubectl create namespace staging
+kubectl create namespace production
+```
+
+**RBAC** controls who can do what. For example, a developer might be able to view pods but not delete them:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: staging
+  name: developer
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services"]
+  verbs: ["get", "list", "watch"]    # Read-only — no "delete" or "create"
+```
+
+A `RoleBinding` then assigns this Role to a specific user or service account.
+
+**When you need it:** As soon as more than one person touches the cluster, or you have staging + production environments.
+
+### 2. Secrets Management
+
+**What we did:** Passwords are in `values.yaml` in plaintext (e.g., `tickerpass123`, InfluxDB token). They get rendered as Kubernetes Secrets (base64-encoded, **not encrypted**).
+
+**The problem:** Anyone with `kubectl get secret -o yaml` can decode them. And they're committed to Git.
+
+**Production solutions:**
+
+| Tool | How It Works |
+|------|-------------|
+| **Sealed Secrets** | Encrypt secrets in Git. Only the cluster can decrypt them |
+| **External Secrets Operator** | Pulls secrets from AWS Secrets Manager, Azure Key Vault, etc. |
+| **SOPS** (Mozilla) | Encrypts YAML files with age/GPG keys. Works great with GitOps |
+| **HashiCorp Vault** | Full-featured secrets management with rotation and auditing |
+
+**When you need it:** Before you push any real credentials to Git.
+
+### 3. Network Policies
+
+**What we did:** Every pod can talk to every other pod. The ingester can reach Grafana, NATS can reach InfluxDB — there are no restrictions.
+
+**The problem:** If an attacker compromises one pod, they can reach everything in the cluster.
+
+**Production solution:** `NetworkPolicy` resources act as firewalls between pods:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: influxdb-allow-only-ticker
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: influxdb
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: ticker-api       # Only ticker-api can reach InfluxDB
+    ports:
+    - port: 8086
+```
+
+> **Note:** k3s uses Flannel CNI by default, which does **not** enforce NetworkPolicies. You'd need to install **Calico** or **Cilium** for enforcement.
+
+**When you need it:** Multi-tenant clusters or any environment with sensitive data.
+
+---
+
+## Kubernetes Concepts Deep Dive
+
+These are core Kubernetes concepts that our project touches — explained through what we actually built.
+
+### 1. StatefulSets vs Deployments
+
+**What we used:** A `Deployment` for InfluxDB with a `PersistentVolumeClaim`.
+
+**When that works:** Single-replica stateful apps. The Deployment creates one pod, attaches the PVC, and restarts it if it crashes. Good enough for our use case.
+
+**When you need a StatefulSet:**
+
+| Feature | Deployment | StatefulSet |
+|---------|-----------|-------------|
+| Pod names | Random (`influxdb-abc123`) | Stable (`influxdb-0`, `influxdb-1`) |
+| Startup order | All at once | Sequential (0 → 1 → 2) |
+| Storage | Shared PVC or one per Deployment | **One PVC per pod** (automatic) |
+| DNS | Via Service only | Each pod gets its own DNS (`influxdb-0.influxdb-svc`) |
+
+**Concrete example:** If we clustered InfluxDB (or added PostgreSQL with read replicas), we'd need a StatefulSet because:
+- `postgres-0` is always the primary (writes)
+- `postgres-1` and `postgres-2` are replicas (reads)
+- Each needs its **own** persistent volume (you can't share a database file)
+- They must start in order (primary first, then replicas connect to it)
+
+```yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: postgres    # Required — creates DNS entries per pod
+  replicas: 3
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16
+        ports:
+        - containerPort: 5432
+  volumeClaimTemplates:    # Creates one PVC per pod automatically
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
+```
+
+**Our decision:** Deployment + PVC is simpler and sufficient for single-instance InfluxDB. This is documented here to show awareness of when the pattern breaks down.
+
+### 2. Init Containers & Sidecars
+
+These are two patterns for running **helper containers** alongside your main application.
+
+#### Init Containers — "Run Setup Before the App Starts"
+
+**We already use this!** In `deployment-api.yaml`:
+
+```yaml
+initContainers:
+  - name: wait-for-influxdb
+    image: busybox:1.36
+    command: ['sh', '-c', 'until nc -z influxdb-service 8086; do echo waiting; sleep 2; done;']
+```
+
+**How it works:**
+1. Kubernetes starts the init container **first**
+2. The init container loops, checking if InfluxDB is reachable (`nc -z`)
+3. Once InfluxDB responds, the init container **exits successfully** (exit code 0)
+4. Only then does Kubernetes start the main `api` container
+5. If the init container fails, Kubernetes **retries it** — the main container never starts
+
+**Why this matters:** Without the init container, the API would start immediately, try to connect to InfluxDB, fail (because InfluxDB might still be booting), and crash. Kubernetes would restart it (CrashLoopBackOff), and eventually it would work — but that's messy.
+
+**Real-world init container examples:**
+- Database migrations before the app starts
+- Downloading config from a remote source
+- Waiting for a dependent service (exactly what we do)
+- Setting file permissions on a volume
+
+#### Sidecars — "Run a Helper Alongside the App"
+
+A sidecar is a **second container in the same pod** that runs alongside your main container. Both containers share:
+- The same network (they communicate via `localhost`)
+- The same volumes (they can read/write the same files)
+
+**Example from our cluster:** Argo CD's `repo-server` pod has a `copyutil` container that runs alongside the main server. When this sidecar had a stale socket file, it crashed — and took the entire pod down with it. That's the `connection refused` error we debugged.
+
+**Common sidecar patterns:**
+
+| Pattern | Sidecar Container | Main Container |
+|---------|-------------------|----------------|
+| **Log shipping** | Filebeat reads log files | App writes to `/var/log/app.log` |
+| **Service mesh** | Envoy proxy handles all network traffic | App talks to `localhost` |
+| **Metrics** | Prometheus exporter | App exposes metrics on `localhost:9090` |
+| **Auth proxy** | OAuth2 proxy handles authentication | App receives pre-authenticated requests |
+
+**Why not just use separate pods?** Sidecars share the pod lifecycle — they start together, stop together, and share `localhost`. A separate pod would need a Service, DNS, and network hops.
+
+### 3. Health Probes
+
+Health probes tell Kubernetes **how to check if your app is working**. Without them, Kubernetes only knows if the process is running — not if it's actually serving traffic.
+
+#### The Three Types
+
+| Probe | Question It Answers | If It Fails... |
+|-------|-------------------|----------------|
+| **Liveness** | "Is the process alive?" | Kubernetes **restarts** the container |
+| **Readiness** | "Can it handle traffic?" | Kubernetes **removes it from the Service** (no traffic) |
+| **Startup** | "Has it finished booting?" | Kubernetes **waits** (doesn't check liveness/readiness yet) |
+
+#### How We Use Them
+
+**UI container** (nginx, port 80) — simple HTTP check:
+```yaml
+livenessProbe:
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 3
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 2
+  periodSeconds: 5
+```
+This works because nginx responds to `/` immediately. If nginx stops serving, Kubernetes restarts the container.
+
+**API container** (Go, port 8090) — dedicated health endpoint:
+```yaml
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8090
+  initialDelaySeconds: 90      # API needs time to compile + connect to InfluxDB
+  periodSeconds: 15
+  failureThreshold: 5          # Allow 5 failures before restart (75 seconds)
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8090
+  initialDelaySeconds: 60
+  periodSeconds: 5
+  failureThreshold: 10         # More patience — API compiles Go code on startup
+```
+The `/health` endpoint in `api/main.go` returns `200 OK`. High `initialDelaySeconds` because the container runs `go mod tidy && go run main.go` at startup.
+
+**Ingester** (UDP, port 5005) — **no HTTP probe possible**:
+
+The ingester only listens on UDP — it has no HTTP server. For UDP-only workloads, you'd use an `exec` probe:
+```yaml
+livenessProbe:
+  exec:
+    command: ["test", "-e", "/tmp/healthy"]
+  periodSeconds: 10
+```
+This runs `test -e /tmp/healthy` inside the container. If the file exists → healthy, if not → restart. The app creates the file on startup and deletes it if something goes wrong. We chose not to implement this because the process-level restart policy (`restartPolicy: Always`) is sufficient — if the ingester crashes, Kubernetes restarts it automatically.
+
+#### Why `initialDelaySeconds` Matters
+
+Without it, Kubernetes starts probing immediately. If your app takes 60 seconds to boot (like our API compiling Go):
+1. Pod starts → Kubernetes probes `/health` at second 3
+2. App isn't ready → probe fails
+3. After `failureThreshold` failures → Kubernetes restarts the pod
+4. Pod restarts → still takes 60 seconds → fails again → restart → **CrashLoopBackOff**
+
+Setting `initialDelaySeconds: 90` tells Kubernetes: "Don't even check for the first 90 seconds."
+
+---
+
+## kubectl Cheat Sheet
+
+Commands we actually used during this project, grouped by what you're trying to do.
+
+### Viewing Resources
+
+```bash
+kubectl get pods                          # List pods in default namespace
+kubectl get pods -n argocd                # List pods in a specific namespace
+kubectl get pods -o wide                  # Show node assignment and IP
+kubectl get all                           # Pods + Services + Deployments in one view
+kubectl get svc                           # List services
+kubectl get pvc                           # List persistent volume claims
+kubectl get events --sort-by=.lastTimestamp  # Recent cluster events
+```
+
+### Debugging Pods
+
+```bash
+kubectl describe pod <pod-name>           # Full details: events, exit codes, probe status
+kubectl logs <pod-name>                   # Application logs
+kubectl logs <pod-name> --previous        # Logs from the CRASHED container (before restart)
+kubectl logs <pod-name> -c <container>    # Logs from a specific container (multi-container pods)
+kubectl logs -f <pod-name>                # Follow logs in real-time (like tail -f)
+kubectl exec -it <pod-name> -- sh         # Shell into a running container
+kubectl exec -it <pod-name> -- du -sh /var/lib/influxdb2  # Run a command inside the pod
+```
+
+### Resource Usage
+
+```bash
+kubectl top pods                          # CPU and memory usage per pod
+kubectl top nodes                         # CPU and memory usage per node
+kubectl describe resourcequota            # Check quota limits and current usage
+```
+
+### Pod Management
+
+```bash
+kubectl delete pod <pod-name>             # Delete a pod (Deployment recreates it)
+kubectl rollout restart deployment <name> # Restart all pods in a deployment
+kubectl scale deployment <name> --replicas=3  # Scale up/down
+kubectl rollout status deployment <name>  # Watch a rolling update progress
+```
+
+### Port Forwarding (Local Access)
+
+```bash
+kubectl port-forward svc/argocd-server -n argocd 8443:443   # Argo CD UI
+kubectl port-forward svc/influxdb-service 8086:8086          # InfluxDB API
+kubectl port-forward svc/nats-service 4222:4222              # NATS client
+```
+
+### Helm
+
+```bash
+helm install <release> <chart-path>       # Deploy a chart
+helm upgrade <release> <chart-path>       # Update a deployed chart
+helm uninstall <release>                  # Remove a release
+helm list                                 # Show installed releases
+helm lint <chart-path>                    # Validate chart syntax
+helm template <chart-path>               # Render templates locally (dry run)
+helm install <release> <chart-path> -f values-dev.yaml  # Use environment-specific values
+```
+
+### Secrets
+
+```bash
+kubectl get secrets                       # List secrets
+kubectl get secret <name> -o yaml         # View secret (base64 encoded)
+# Decode a secret value (PowerShell):
+[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("dGlja2VyLXNlY3JldC10b2tlbg=="))
+# Decode a secret value (Linux/macOS):
+echo "dGlja2VyLXNlY3JldC10b2tlbg==" | base64 -d
+```
+
+### Argo CD CLI
+
+```bash
+argocd app list                           # List all applications
+argocd app sync <app-name>                # Force sync from Git
+argocd app get <app-name>                 # Detailed app status
+argocd app history <app-name>             # Deployment history
+argocd app rollback <app-name> <rev>      # Rollback to a previous revision
+```
