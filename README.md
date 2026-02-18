@@ -1930,6 +1930,75 @@ Setting `initialDelaySeconds: 90` tells Kubernetes: "Don't even check for the fi
 
 ---
 
+## Moving to Cloud (AWS EKS / Azure AKS / GCP GKE)
+
+Kubernetes is an abstraction layer — your app code and Helm charts are portable. Here's what changes.
+
+### What Stays Identical (0 changes)
+
+- All Go code (`main.go`, `api/main.go`)
+- All Helm chart templates and structure
+- Grafana dashboards and Prometheus queries
+- Argo CD Application manifests
+- ConfigMaps, Secrets, ServiceMonitors
+
+### What Changes (Infrastructure Only)
+
+| Component | Local (k3s) | Cloud (e.g. AWS EKS) |
+|-----------|------------|---------------------|
+| **Cluster** | `k3s install` | `eksctl create cluster` / Terraform |
+| **Ingress** | Traefik (built-in) | AWS ALB / Nginx (install separately) |
+| **TLS** | Self-signed `generate-tls.ps1` | cert-manager + Let's Encrypt (automated) |
+| **Storage** | `local-path` (reports wrong size!) | `gp3` / `managed-premium` (accurate metrics) |
+| **DNS** | `hosts` file (`ticker → localhost`) | Route53 / Cloud DNS (real domain) |
+| **Images** | Local Docker build | ECR / ACR / GCR (push to registry) |
+| **Secrets** | Plaintext in `values.yaml` | Sealed Secrets / External Secrets Operator |
+| **NodePort** | `30005`, `30007`, etc. | Replaced by Ingress + LoadBalancer |
+
+### Docker Build & Push to ECR (AWS Example)
+
+Instead of building images locally, you'd push to a container registry:
+
+```bash
+# 1. Authenticate Docker with ECR
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 123456789.dkr.ecr.us-east-1.amazonaws.com
+
+# 2. Create repositories (one-time)
+aws ecr create-repository --repository-name ticker-ingester
+aws ecr create-repository --repository-name ticker-api
+aws ecr create-repository --repository-name ticker-ui
+
+# 3. Build images
+docker build -t ticker-ingester:v1 -f Dockerfile .
+docker build -t ticker-api:v1 -f api/Dockerfile ./api
+docker build -t ticker-ui:v1 -f ui/Dockerfile ./ui
+
+# 4. Tag for ECR
+docker tag ticker-ingester:v1 123456789.dkr.ecr.us-east-1.amazonaws.com/ticker-ingester:v1
+docker tag ticker-api:v1 123456789.dkr.ecr.us-east-1.amazonaws.com/ticker-api:v1
+docker tag ticker-ui:v1 123456789.dkr.ecr.us-east-1.amazonaws.com/ticker-ui:v1
+
+# 5. Push
+docker push 123456789.dkr.ecr.us-east-1.amazonaws.com/ticker-ingester:v1
+docker push 123456789.dkr.ecr.us-east-1.amazonaws.com/ticker-api:v1
+docker push 123456789.dkr.ecr.us-east-1.amazonaws.com/ticker-ui:v1
+```
+
+Then update `values.yaml` to reference the ECR images:
+```yaml
+# Before (local)
+ingester:
+  image: ticker-ingester:latest
+
+# After (cloud)
+ingester:
+  image: 123456789.dkr.ecr.us-east-1.amazonaws.com/ticker-ingester:v1
+```
+
+Everything else (`helm install`, Argo CD sync, Prometheus scraping) works exactly the same.
+
+---
+
 ## kubectl Cheat Sheet
 
 Commands we actually used during this project, grouped by what you're trying to do.
